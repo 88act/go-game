@@ -1,9 +1,9 @@
 <script>
-    var ws = new WebSocket("ws://localhost:2303/ping");  
+    var ws = new WebSocket("ws://localhost:2303/ws");  
     //连接打开时触发 
     ws.onopen = function(evt) {  
         console.log("Connection open ...");  
-        console.log("send: " + "Hello ping"); 
+        console.log("send: " + "Hello ws"); 
         ws.send("ping");  
     };  
     //接收到消息时触发  

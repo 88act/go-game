@@ -9,7 +9,7 @@ go-server 是一个基于Golang的轻量级并发网络服务框架，
 
 
 demo 实例 是 一个html 发送 json 格式， 服务器端用protobuf 协议的混合demo ， 方便网页简单的发json数据 
-
+html使用json发送消息， 而服务器端可以方便的使用 protobuf 生成的类
 
 ```shell
 go get github.com/88act/go-server

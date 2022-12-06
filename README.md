@@ -1,5 +1,5 @@
 # go-server
-
+v1.0.0
 go-server 是一个基于Golang的轻量级并发网络服务框架，
 支持tcpSocket和websocket。
 内置支持protocol buffer 和json 格式

@@ -1,15 +1,16 @@
 # go-server
-v1.0.0
-go-server 是一个基于Golang的轻量级并发网络服务框架，
-支持tcpSocket和websocket。
-内置支持protocol buffer 和json 格式
-支持消息路由
-支持消息协议编号
-简单明了，方便扩展
+v1.0.0 \
+go-server 是一个基于Golang的轻量级并发网络服务框架， \
+支持tcpSocket和websocket。 \
+内置支持protocol buffer 和json 格式  \
+支持消息路由  \
+支持消息协议编号 \
+简单明了，方便扩展  \
 
 
-demo 实例 是 一个html 发送 json 格式， 服务器端用protobuf 协议的混合demo ， 方便网页简单的发json数据 
-html使用json发送消息， 而服务器端可以方便的使用 protobuf 生成的类
+demo 实例 是 一个客户端 js html 发送 json 格式， 服务器端用protobuf 协议的混合demo 。 \
+方便网页简单的发json数据 \
+html使用json发送消息， 而服务器端可以方便的使用 protobuf 生成的类 \
 
 ```shell
 go get github.com/88act/go-server

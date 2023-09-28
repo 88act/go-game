@@ -1,8 +1,9 @@
-# go-server
-v1.0.0 \
-go-server 是一个基于Golang的轻量级并发网络服务框架， \
-支持tcpSocket和websocket。 \
-内置支持protocol buffer 和json 格式  \
+#  go-webrtc-im
+ 
+go-webrtc-im  一个基于go webrtc 的视频会议于聊天IM项目 \
+包含完整的服务器端 go webrtc/rtmp  推流服务器， go websocket im服务器  \
+包含完整的vue3 typescript客户端 \
+消息支持protocol buffer 和json 格式  \
 支持消息路由  \
 支持消息协议编号 \
 简单明了，方便扩展  \
@@ -13,93 +14,14 @@ demo 实例 是 一个客户端 js html 发送 json 格式， 服务器端用pro
 html使用json发送消息， 而服务器端可以方便的使用 protobuf 生成的类 \
 
 ```shell
-go get github.com/88act/go-server
+go get github.com/88act/go-webrtc-im
 ```
 
 ## demo
 
 简单在线聊天chat ， 维护在线用户状态，上线 ，下线通知，发送消息等。 可以方便的扩展为游戏服务器框架，或者即时聊天IM 服务器框架 
 
-### server
-服务器端 
-```go
-
-
-package main
-
-import (
-	"github.com/88act/go-server"
-	"github.com/88act/go-server/demo/server/ProtoMsg"
-	"github.com/88act/go-server/demo/server/routers"
-)
-
-var server goServer.IServer
-
-func main() {
-	server = goServer.NewServer("ChatServer", goServer.WsServer, "0.0.0.0", config.ConfigMgr.Port)
-	server.SetOnConnStart(playerStart)
-	server.SetOnConnStop(playerStop)
-	server.AddRouter(int32(ProtoMsg.CMD_DEV_C_DevInfo), &routers.DevInfoRouter{}, ProtoMsg.C2S_DevInfo{})
-	server.AddRouter(int32(ProtoMsg.CMD_DEV_C_DevPing), &routers.PingRouter{}, ProtoMsg.C2S_DevPing{})
-
-	server.Serve()
-
-	fmt.Println("websocket 启动 Port=", config.ConfigMgr.Port)
-
-	select {}
-}
-
-func playerStart(session goServer.ISession) {
-	fmt.Println("新玩家连接: ", session.RemoteIP())
-	managers.PlayerMgr.Add(&managers.Player{Session: session})
-}
-
-func playerStop(session goServer.ISession) {
-	fmt.Println("玩家断开连接")
-	connId := session.GetConnId()
-	ownPlayer := managers.PlayerMgr.Get(connId)
-	playerInfo := ownPlayer.Info
-
-	managers.PlayerMgr.Remove(session)
-	go sendToOther(connId, playerInfo)
-}
-
-```
-
-#### router
-```go
-package routers
-
-import (
-	"fmt"
-	"github.com/88act/go-server"
-	"github.com/88act/go-server/demo/server/ProtoMsg"
-	"google.golang.org/protobuf/proto"
-)
-
-type PingRouter struct {
-	go-server.BaseRouter
-}
-
-func (r *PingRouter) Handle(request go-server.IRequest, message proto.Message) {
-	msg := message.(*ProtoMsg.C2S_Ping)
-
-	fmt.Println("===> client msgId: ", request.GetMsgId(), " msg: ", msg.GetPing())
-
-	pong := ProtoMsg.S2C_Pong{
-		Pong: "pong",
-	}
-
-	buffer, err := proto.Marshal(proto.Message(&pong))
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	_ = request.GetSession().SendBuffMsg(int32(ProtoMsg.CMD_PONG), buffer)
-}
-```
+ 
 
 ### client
 客户端 

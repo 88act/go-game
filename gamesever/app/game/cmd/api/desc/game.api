@@ -1,0 +1,70 @@
+syntax = "v1"
+
+info(
+	title: "GAME服务"
+	desc: "GAME服务"
+	author: "linjd"
+	email: "10512203@qq.com"
+	version: "v1.0"
+)
+
+import (
+	"game/game.api"
+)
+
+//=====================================> game v1 <=================================
+
+// no login
+@server(
+	prefix: game/v1
+	group: game
+)
+
+service game {
+	@doc "排行榜"
+	@handler getRank
+	post /game/getRank  returns (rankResp)
+	
+	@doc "获取商城物品"
+	@handler getShop
+	post /game/getShop  returns (ShopResp)
+	
+	@doc "公告"
+	@handler getNotify
+	post /game/getNotify   returns (NotifyResp)
+	
+	@doc "关卡列表"
+	@handler getBattle
+	post /game/getBattle   returns (BattleResp)
+}
+
+// need login
+@server(
+	prefix: game/v1
+	group: game
+	jwt: JwtAuth
+)
+
+service game {
+	
+	@doc "获取背包"
+	@handler getPack
+	post /game/getPack  returns (packResp)
+	
+	@doc "使用道具"
+	@handler  useGoods
+	post /game/useGoods (IdReq) returns (OkResp)
+	
+	@doc "增减金币/积分"
+	@handler  changeScore
+	post /game/changeScore (ChangeScoreReq) returns (ChangeScoreResp)
+	
+	@doc "购买物品"
+	@handler buyGoods
+	post /game/buyGoods (IdReq)  returns (OkResp)
+	
+	@doc "我的关卡进度"
+	@handler getMyBattle
+	post /game/getMyBattle   returns (BattleResp)
+	
+}

@@ -1,0 +1,46 @@
+syntax = "v1"
+
+info(
+	title: "用户实例"
+	desc: "用户实例"
+	author: "Linjd"
+	email: "10512203@qq.com"
+)
+
+ // api 文件 
+ // MemUser 结构体 
+type MemUser struct { 
+    Id        int64   `json:"id"`       // 用户id	
+   	Username   string `json:"username"` //用户名    
+    Mobile  string `json:"mobile"`       //手机
+    Nickname  string `json:"nickname"`   //昵称
+    Realname  string `json:"realname"`   //真实名   
+    Sex  int `json:"sex"`                //性别     
+    Avatar  string `json:"avatar"`       //头像  
+    Status  int `json:"status"`         //状态  
+    CuId    int64   `json:"cuId"`       //客户id	
+	CuGuid  string `json:"cuGuid"`	    //客户GUID	
+}
+
+ 
+type (
+	LoginReq {	    	  
+	    Username  string `json:"username"`	 //用户名	  
+		Password string `json:"password"`	//密码	 
+	}
+    LoginScanReq {	
+	    Value string `json:"value"`    //  二维码值
+	}
+	
+	LoginResp { 
+		AccessToken  string `json:"accessToken"` //认证token
+		AccessExpire int64  `json:"accessExpire"`
+		RefreshAfter int64  `json:"refreshAfter"`
+	}
+) 
+
+type ( 
+	UserInfoResp {
+		UserInfo MemUser `json:"userInfo"`  //用户信息
+	}
+)

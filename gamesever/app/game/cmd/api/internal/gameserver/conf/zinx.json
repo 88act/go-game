@@ -1,0 +1,17 @@
+{
+  "Name":"ImTeamilo",
+  "Host":"0.0.0.0",
+  "TcpPort":8999,
+  "WsPort":8448,
+  "MaxConn":3000,
+  "WorkerPoolSize":10,
+  "LogDir": "./imserverLog",
+  "LogFile":"imserver.log",
+  "HeartbeatMax": 20,
+  "Mysql":"root:Jiqu9428WEr25xRw@tcp(mysql:53306)/teamilo?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai",
+  "Redis":"redis:6379",
+  "RedisPwd":"",
+  "RedisDB":1,
+  "Webrtc":"https://im.teamilo.com/",
+  "ResUrl":"https://im.teamilo.com/"  
+}

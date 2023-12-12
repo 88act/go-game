@@ -1,0 +1,194 @@
+syntax="proto3";                //Proto协议
+package pb;                     //当前包名
+option go_package = "./;pb";
+
+//ping心跳  1000->2000
+message Ping{
+	int64 sn =1;
+}
+
+//ping心跳  2000
+message PingResp{
+	int64 sn =1;
+	string nowTime =2;
+}
+
+
+//用户登陆 100000->200000
+message Login{	
+	string username =1;
+	string password =2;
+	string token =3;
+    string plat =4;
+	int64  userId =5; 
+}
+
+
+//用户信息 200000
+message UserInfo{
+	int64  userId=1;     //userId
+	string username =2;  //用户名
+	string nickname =3;  //昵称
+	int32  sex =4;       //性别
+	string image =5;	   //头像
+	string rtmp =6;	     // rtmp 推拉流路径
+	string webrtc =7;	   // webrtc 推拉流路径
+	int64  roomId=8;     //房间id
+    string plat =9;	     // 平台 ar web vr
+    int32  online =10;	 //1在线 0离线
+	int64  cuId=11;     //cuId  客户id
+}
+
+//进入房间 100001->200001
+message EnterRoom{
+	int64 roomId=1;
+	int64 userId=2;
+}
+
+// 房间信息 200001
+message EnterRoomResp{
+	int64 roomId=1;      //房间id
+	int32 type=2;    //房间类型 1公开 2 私有
+	string name =3;   //房间名称
+	int32  maxUser=4;   //最多用户
+	string password=5;   //房间密码
+	string image=6;     //插图
+	repeated UserInfo userList =7;  //房间用户
+}
+
+
+// 聊天消息 100002 ->200002
+message ChatMsg{
+	int64 userId=1;     //用户id(发送人)
+	int64 objId=2;      //对象id（用户id/房间id）
+	int32 chatType=3;   //1 世界 2 房间 3 一对一私聊
+	int32 msgType=4;    //1 文字 2 图片 3 视频 4 文件 5 语音聊天 6视频聊天 7 共享白板  9 推流视频 10  停止推流 11  拨号 12屏幕点击坐标
+	string msg=5;       //聊天内容 (如果msgType=9或10   msg=1 播放摄像头 msg=2 播放屏幕共享，msgType=11 msg=1拨号 msg=2同意 msg=3拒绝  )
+	string url=6;       //附件图片视频url
+	int64 sendTime=7;   //发送时间戳秒
+}
+
+//聊天消息 200002
+message ChatMsgResp{
+	repeated ChatMsg MsgList =1;  // 消息列表
+}
+
+
+//创建房间 100003->200003
+message CreateRoom{
+	string name=1; //名称
+	int32 type=2;    //房间类型 1公开 2 私有
+	int32 maxUser=3;   //最多用户
+	string password=4;   //密码
+}
+
+//创建房间 200003
+message CreateRoomResp{
+	int32 status=1;  //200 成功  400失败
+	string msg=2; //消息
+}
+
+
+//获取房间列表 100004->200004
+message RoomList{
+	int32 type=1;
+}
+
+//获取房间 200004
+message RoomListResp{
+	repeated EnterRoomResp roomList =1;
+}
+
+//退出房间 100005->200005
+message QuitRoom{
+	int64 roomId=1;
+	int64 userId=2;
+}
+
+//退出房间 200005
+message QuitRoomResp{
+	UserInfo userInfo =1;  //退出用户
+}
+
+
+//加好友 100100 ->200100
+message AddFriend{
+	int64 userId=1;     //userid
+	int32 type=2;     // 0陌生人 1好友 2 黑名单 3 临时会话
+}
+//加好友 200100
+message AddFriendResp{
+	int32 status=1;  //200 成功  400失败
+	string msg=2; //消息
+}
+
+//我的好友列表 100101 ->200101
+message MyFriend{
+	int32 type=1;     // 0 全部 1好友 2 黑名单 3 临时会话
+	string searchKey=2;     // 查询字
+}
+
+//好友列表resp 200101
+message MyFriendResp{
+	repeated UserInfo userList =1;  //用户list
+}
+
+
+//退出/掉线 100900
+message Logout{
+	int32 type=1;     //  1主动退出 2 掉线 3 其他登录占用
+	int64 userId=2;     //userid
+}
+//退出/掉线resp 200900
+message LogoutResp{
+	int32 type=1;     //  1主动退出 2 掉线  3 其他登录占用
+	int64 userId=2;     //userid
+}
+
+
+
+
+
+//同步客户端玩家ID========以下 没什么用========================
+
+//用户坐标位置
+message Position{
+	float X=1;
+	float Y=2;
+	float Z=3;
+	float V=4;
+}
+
+message SyncPID{
+	int64 PID=1;
+}
+
+
+//玩家广播数据
+message BroadCast{
+	int64 PID=1;
+	int32 Tp=2;              //1-世界聊天  2-玩家位置 3 动作 4 移动之后坐标信息更新
+	oneof Data {
+        string Content=3;    //聊天的信息
+        Position P=4;        //广播用户的位置
+		int32 ActionData=5;
+        }
+}
+
+//玩家聊天数据
+message Talk{
+	string Content=1;    //聊天内容
+}
+
+//玩家信息
+message Player{
+	int64 PID=1;
+	Position P=2;
+}
+
+//同步玩家显示数据
+message SyncPlayers{
+	repeated Player ps=1;
+}
+
+

@@ -1,0 +1,53 @@
+syntax = "v1"
+
+info(
+	title: "用户中心服务"
+	desc: "用户中心服务"
+	author: "Linjd"
+	email: "10512203@qq.com"
+	version: "v1"
+)
+
+import (
+	"user/user.api"
+	"user/common.api"
+)
+
+//============================> usercenter v1 <============================
+//no need login
+@server(
+	prefix: usercenter/v1
+	group: user
+)
+service usercenter {
+	
+	@doc "注册"
+	@handler register
+	post /user/register (LoginReq) returns (LoginResp)
+	
+	@doc "登录"
+	@handler login
+	post /user/login (LoginReq) returns (LoginResp)
+	
+	@doc "扫码登录"
+	@handler loginScan
+	post /user/loginScan (LoginScanReq) returns (LoginResp)
+	
+}
+
+//need login
+@server(
+	prefix: usercenter/v1
+	group: user
+	jwt: JwtAuth
+)
+service usercenter {
+	
+	@doc "用户资料"
+	@handler detail
+	post /user/detail   returns (UserInfoResp)
+	
+	@doc "验证token有效性"
+	@handler tokenVerify
+	post /user/tokenVerify  returns (OkResp)
+}

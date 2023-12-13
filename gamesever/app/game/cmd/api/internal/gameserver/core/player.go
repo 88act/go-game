@@ -29,13 +29,13 @@ var IDLock sync.Mutex // Mutex for protecting PIDGen(保护PIDGen的互斥机制
 
 // NewPlayer Create a player object
 func NewPlayer(conn ziface.IConnection) *Player {
-	IDLock.Lock()
-	ID := PIDGen
-	PIDGen++
-	IDLock.Unlock()
+	// IDLock.Lock()
+	// ID := PIDGen
+	// PIDGen++
+	// IDLock.Unlock()
 
 	p := &Player{
-		Pid:  ID,
+		Pid:  1,
 		Conn: conn,
 		X:    float32(160 + rand.Intn(50)), // Randomly offset on the X-axis based on the point 160(随机在160坐标点 基于X轴偏移若干坐标)
 		Y:    0,                            // Height is 0
@@ -248,7 +248,7 @@ func (p *Player) LostConnection() {
 }
 
 // SendMsg
-func (p *Player) SendMsg(msgID uint32, data proto.Message) error {
+func (p *Player) SendMsg(msgId uint32, data proto.Message) error {
 	if p.Conn == nil {
 		return errors.New("player连接为空")
 	}
@@ -259,7 +259,7 @@ func (p *Player) SendMsg(msgID uint32, data proto.Message) error {
 	if err != nil {
 		return errors.New("结构体序列化错误" + err.Error())
 	}
-	err = p.Conn.SendMsg(msgID, msgByte)
+	err = p.Conn.SendMsg(msgId, msgByte)
 	if err != nil {
 		return err
 	} else {

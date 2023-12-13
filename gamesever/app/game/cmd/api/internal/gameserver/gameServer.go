@@ -92,20 +92,8 @@ func (m *GameServer) Start() {
 
 // 当客户端建立连接的时候的hook函数
 func OnConnectionAdd(conn ziface.IConnection) {
-	fmt.Println("=====> OnConnecionAdd is Called ...")
-	//创建一个玩家
-	player := core.NewPlayer(conn)
-	//同步当前的PlayerID给客户端， 走MsgID:1 消息
-	//player.SyncPID()
-	//将当前新上线玩家添加到worldManager中
-	core.WorldMgrObj.AddPlayer(player)
-	//将该连接绑定属性PID
-	conn.SetProperty("pID", player.Pid)
-	//同步周边玩家上线信息，与现实周边玩家信息
-	//player.SyncSurrounding()
-	//同步当前玩家的初始化坐标信息给客户端，走MsgID:200消息
-	//player.BroadCastStartPosition()
-	fmt.Println("=====> Player pIDID = ", player.Pid, " arrived ====")
+	logx.Infof("有新连接请求 %d, ip=%s", conn.GetConnID(), conn.RemoteAddrString())
+	//core.GetWM().ConnList[conn.GetConnID()] = conn
 }
 
 // 当客户端断开连接的时候的hook函数

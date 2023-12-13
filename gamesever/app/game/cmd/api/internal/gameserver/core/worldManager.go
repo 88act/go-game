@@ -1,15 +1,20 @@
 package core
 
 import (
+	"context"
 	"sync"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/zeromicro/go-zero/core/logc"
 )
 
 // 当前游戏世界的总管理模块
 type WorldManager struct {
-	//AoiMgr   *AOIManager        // 当前世界地图的AOI规划管理器
 	Players  map[int64]*Player     //  当前在线的玩家集合)
 	pLock    sync.RWMutex          //  保护Players的互斥读写机制
 	RoomList map[int64]*AOIManager //  场景的AOI管理器
+	//ConnList map[uint64]ziface.IConnection //  当前在线的玩家集合
+	//AoiMgr   *AOIManager        // 当前世界地图的AOI规划管理器
 }
 
 var RoomList = []int64{1000, 1001, 1002}
@@ -43,14 +48,14 @@ func (m *WorldManager) AddPlayer(player *Player) {
 	m.GetRoom(player.RoomId).AddToGrIDByPos(player.Pid, player.X, player.Z)
 }
 
-// 从玩家信息表中移除一个玩家
+// 移除一个玩家
 func (m *WorldManager) RemovePlayerByPID(pID int64) {
 	m.pLock.Lock()
 	delete(m.Players, pID)
 	m.pLock.Unlock()
 }
 
-// 通过玩家ID 获取对应玩家信息
+// 通过ID获取玩家
 func (m *WorldManager) GetPlayerByPID(pID int64) *Player {
 	m.pLock.RLock()
 	defer m.pLock.RUnlock()
@@ -71,7 +76,6 @@ func (m *WorldManager) GetAllPlayers() []*Player {
 
 // 获取指定gID中的所有player信息
 func (m *WorldManager) GetPlayersByGID(roomId int64, gID int) []*Player {
-
 	pIDs := m.GetRoom(roomId).grIDs[gID].GetPlyerIDs()
 	players := make([]*Player, 0, len(pIDs))
 	m.pLock.RLock()
@@ -80,4 +84,52 @@ func (m *WorldManager) GetPlayersByGID(roomId int64, gID int) []*Player {
 	}
 	m.pLock.RUnlock()
 	return players
+}
+
+// 给某个玩家发消息
+func (m *WorldManager) SendOne(ctx context.Context, msgId uint32, data proto.Message, pid int64) error {
+	err := m.Players[pid].SendMsg(msgId, data)
+	if err != nil {
+		logc.Error(ctx, "SendOne发送消息出错，pid=%d,msgId=%d ", pid, msgId)
+	}
+	return err
+}
+
+// 世界广播
+func (m *WorldManager) SendWorld(ctx context.Context, msgId uint32, data proto.Message) error {
+	var err error
+	for _, p := range m.Players {
+		err = p.SendMsg(msgId, data)
+		if err != nil {
+			logc.Error(ctx, "SendWorld发送消息出错，pid=%d,msgId=%d ", p.Pid, msgId)
+		}
+	}
+	return err
+}
+
+// 房间广播
+func (m *WorldManager) SendRoom(ctx context.Context, msgId uint32, data proto.Message, roomId int64) error {
+	var err error
+	for _, p := range m.Players {
+		if p.RoomId == roomId {
+			err = p.SendMsg(msgId, data)
+			if err != nil {
+				logc.Error(ctx, "SendRoom发送消息出错，roomid =%d, pid=%d,msgId=%d ", roomId, p.Pid, msgId)
+			}
+		}
+	}
+	return err
+}
+
+// 可视图内广播
+func (m *WorldManager) SendView(ctx context.Context, msgId uint32, data proto.Message, roomId int64, gID int) error {
+	viewPlayers := m.GetPlayersByGID(roomId, gID)
+	var err error
+	for _, p := range viewPlayers {
+		err = p.SendMsg(msgId, data)
+		if err != nil {
+			logc.Error(ctx, "SendView发送消息出错 roomid =%d, pid=%d,msgId=%d,gID=%d ", roomId, p.Pid, msgId, gID)
+		}
+	}
+	return err
 }

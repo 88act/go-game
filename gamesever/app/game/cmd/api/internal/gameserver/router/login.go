@@ -7,9 +7,9 @@ import (
 	"go-cms/app/game/cmd/api/internal/gameserver/pb"
 
 	"github.com/aceld/zinx/ziface"
-	"github.com/aceld/zinx/zlog"
 	"github.com/aceld/zinx/znet"
 	"github.com/gogf/gf/util/gconv"
+	"github.com/zeromicro/go-zero/core/logc"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -19,25 +19,45 @@ type LoginRouter struct {
 }
 
 // Ping Handle
-func (m *LoginRouter) Handle(request ziface.IRequest) {
+func (m *LoginRouter) Handle(req ziface.IRequest) {
+	ctx := req.GetConnection().Context()
 
 	msg := &pb.Login{}
-	err := proto.Unmarshal(request.GetData(), msg)
+	err := proto.Unmarshal(req.GetData(), msg)
 	if err != nil {
-		zlog.Errorf()
+		logMsg := getLogMsg(req) + err.Error()
+		logc.Error(ctx, logMsg)
 		return
 	}
+	// 读取数据库信息 登录用户
+	//core.GetWM().ConnList[req.GetConnection()]
+	conn := req.GetConnection()
+	conn.SetProperty("pID", 1)
+	player := core.NewPlayer(conn)
+	core.GetWM().AddPlayer(player)
 
-	pID, err := request.GetConnection().GetProperty("pID")
-	if err != nil {
-		fmt.Println("GetProperty pID error", err)
-		request.GetConnection().Stop()
-		return
-	}
+	// pID, err := req.GetConnection().GetProperty("pID")
+	// if err != nil {
+	// 	req.GetConnection().Stop()
+	// 	logMsg := getLogMsg(req) + err.Error()
+	// 	logc.Error(ctx, logMsg)
+	// 	return
+	// }
+
+	//创建一个玩家
+	//player := core.NewPlayer(conn)
+	//core.WorldMgrObj.AddPlayer(player)
+	//将该连接绑定属性PID
+	//conn.SetProperty("ConnId", conn.GetConnID())
+	//同步周边玩家上线信息，与现实周边玩家信息
+	//player.SyncSurrounding()
+	//同步当前玩家的初始化坐标信息给客户端，走MsgID:200消息
+	//player.BroadCastStartPosition()
+	//fmt.Println("=====> Player pIDID = ", player.Pid, " arrived ====")
 
 	//fmt.Println("接收到 login  3 pID=", pID)
 	//3. 根据pID得到player对象
-	player := core.WorldMgrObj.GetPlayerByPID(pID.(int64))
+	//player := core.WorldMgrObj.GetPlayerByPID(pID.(int64))
 	// // 读取数据库
 	// memUser, err := service.GetMemUserSev().Get(context.Background(), msg.UserId, "")
 	// if err != nil {
@@ -54,22 +74,24 @@ func (m *LoginRouter) Handle(request ziface.IRequest) {
 
 	// core.WorldMgrObj.KillSameUser(memUser.Id, pID.(int64))
 	resp := &pb.UserInfo{}
-	resp.UserId = msg.UserId                              //memUser.Id
+	resp.UserId = 1                                       //memUser.Id
 	resp.RoomId = 1000                                    // 默认房间号
 	resp.Nickname = "Realname" + gconv.String(msg.UserId) // memUser.Realname
-	resp.Username = msg.Username                          //"username" + gconv.String(pID)
+	//resp.Username = msg.Username                          //"username" + gconv.String(pID)
 
 	fmt.Println("接收到 login  6 pID=", resp)
-	resp.Webrtc = "https://210.0.0.1" //zconf.GlobalObject.Webrtc + "webrtc/push/room/" + cu.Guid + "/" + gconv.String(resp.RoomId) + "/" + gconv.String(resp.UserId)
-	resp.Image = ""                   // memUser.Avatar
+	//resp.Webrtc = "https://210.0.0.1" //zconf.GlobalObject.Webrtc + "webrtc/push/room/" + cu.Guid + "/" + gconv.String(resp.RoomId) + "/" + gconv.String(resp.UserId)
+	resp.Image = "" // memUser.Avatar
 	resp.Plat = msg.Plat
 	resp.Online = 1
 	player.Userinfo = resp
+	player.RoomId = resp.RoomId
+	core.GetWM().SendWorld(ctx, pb.S_LoginResp, resp)
 	// fmt.Printf("登录 resp Plat %s ", resp.Plat)
 	// fmt.Println("接收到 login  5 pID=", resp)
 	//发送给所有人
 	//fmt.Println("LoginRouter 发送给所有人")
-	core.WorldMgrObj.SendAll(pb.S_UserInfo, resp)
-	player.SendMsg(pb.S_UserInfo, resp)
+
+	//player.SendMsg(pb.S_UserInfo, resp)
 
 }

@@ -15,7 +15,7 @@ LogConf:
   MaxBackups: 20
 
 DB:
-  DNS: gocms:gocms123456@tcp(mysql-gocms:53306)/game?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  DNS: gocms:gocms123456@tcp(mysql-gocms:53306)/go-game?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
   #设置打开数据库连接的最大数量
   MaxOpenConns: 100
   #设置空闲连接池中连接的最大数量

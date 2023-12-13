@@ -1,0 +1,17 @@
+{
+  "Name":"ImServer",
+  "Host":"0.0.0.0",
+  "TcpPort":8999,
+  "WsPort":8888,
+  "MaxConn":3000,
+  "WorkerPoolSize":10,
+  "LogDir": "./imserverLog",
+  "LogFile":"imserver.log",
+  "HeartbeatMax": 20,
+  "Mysql":"root:Jiqu9428WEr25xRw@tcp(10.0.0.222:53306)/ekms?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai",
+  "Redis":"redis:6379",
+  "RedisPwd":"",
+  "RedisDB":1,
+  "Webrtc":"https://10.0.0.222/",
+  "ResUrl":"https://10.0.0.222/"  
+}

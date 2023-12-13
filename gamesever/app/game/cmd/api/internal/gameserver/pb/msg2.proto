@@ -15,32 +15,44 @@ message PingResp{
 
 //用户登陆 100000->200000
 message Login{	
-	int64  userId =1;  
-	string token =2; //token
-    string plat =3;   //平台
-	string param =4; //附加参数
+	int64  userIdPlat =1;  
+	string username =2;
+	string password =3;
+	string token =4; //token
+    string plat =5;   //平台
+	string param =6; //附加参数
+	string referral =7; // 推荐码	
 }
 
 //登陆信息 200000
-message LoginResp{ 
-	int32 status =1;  //1成功 0 失败  
-	string msg =2;  //  
-	UserInfo userInfo =3;  //用户名 
+message LoginResp{
+	int64  userIdPlat=1;     //userIdPlat 平台用户id 
+	string username =2;  //用户名
+	string nickname =3;  //昵称
+	string realname =4;  //真名
+	int32  sex =5;       //性别
+	string image =6;	 //头像
+	string beRealname =7; //实名认证
+    string plat =8;	     // 平台pc/wx/andr/ios
+    int32  online =9;	 // 1在线 0离线
+	string webrtc =10;	 // webrtc推拉流 
+	repeated gameServer gameServerList =11; // {[服务器ip，服务器名，角色玩家id，角色玩家名]} 
 }
 
-//用户信息  
-message UserInfo{
-	int64  userId=1;     //userId 
-	string username =2;  //昵称	
-	string nickname =3;  //昵称	 
-	int32  sex =4;       //性别
-	string image =5;	 //头像
-    string plat =6;	     // 平台pc/wx/andr/ios
-    int32  online =7;	 // 1在线 0离线  
-	int64 roomId=8;     //场景id　
-	Site position =9;   //坐标
+// 游戏服务器信息
+message gameServer{
+	int64 serverId=1;
+	string serverIp=2;
+	string serverName=3; 
+	repeated roleInfo roleList=4;   // 用户角色列表
 }
- 
+// 服务器角色信息
+message roleInfo{
+	int64 userId=1; // 角色用户id   
+    string nickname=2; //昵称
+    int32  level=3;    //等级
+}
+
 
 //进入场景/房间 100001->200001
 message EnterRoom{
@@ -93,7 +105,7 @@ message CreateRoomResp{
  
 //获取场景/房间列表 100004->200004
 message RoomList{
-	int32 type=1; //房间类型 1公开 2 私有
+	int32 type=1;
 }
 
 //获取场景/房间 200004
@@ -179,12 +191,24 @@ message AttackResp{
 	string warInfo=8;  // 回合制json数据 
 } 
 
+//用户信息  
+message UserInfo{
+	int64  userId=1;     //userId 
+	string nickname =3;  //昵称	 
+	int32  sex =5;       //性别
+	string image =6;	 //头像
+	string beRealname =7;	 //实名认证
+    string plat =8;	     // 平台pc/wx/andr/ios
+    int32  online =9;	 // 1在线 0离线  
+	int64 roomId=10;     //场景id　
+	Site position =11;   //坐标
+}
 
 //玩家坐标
 message UserSite{
 	int64 userId=1;     
 	Site site =2;        //坐标
-	string action =3;    //动作参数
+	string action =3;   //动作参数
 }
 
 //坐标位置

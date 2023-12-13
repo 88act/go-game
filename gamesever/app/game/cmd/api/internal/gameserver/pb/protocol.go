@@ -4,7 +4,7 @@ const (
 	C_Ping           uint32 = 1000
 	S_PingResp       uint32 = 2000
 	C_Login          uint32 = 100000
-	S_UserInfo       uint32 = 200000
+	S_LoginResp      uint32 = 200000
 	C_EnterRoom      uint32 = 100001
 	S_EnterRoomResp  uint32 = 200001
 	C_ChatMsg        uint32 = 100002
@@ -20,6 +20,11 @@ const (
 	S_AddFriendResp uint32 = 200100
 	C_MyFriend      uint32 = 100101
 	S_MyFriendResp  uint32 = 200101
+
+	C_Move       uint32 = 100200
+	S_MoveResp   uint32 = 200200
+	C_Attack     uint32 = 100201
+	S_AttackResp uint32 = 200201
 
 	C_Logout uint32 = 100900
 	S_Logout uint32 = 200900

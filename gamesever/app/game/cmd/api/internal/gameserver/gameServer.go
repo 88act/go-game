@@ -13,6 +13,7 @@ import (
 
 	"github.com/aceld/zinx/zconf"
 	"github.com/aceld/zinx/ziface"
+	"github.com/aceld/zinx/zlog"
 	"github.com/aceld/zinx/znet"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/rest"
@@ -48,6 +49,12 @@ func (m *GameServer) Stop() {
 
 // Start starts the gateway server.
 func (m *GameServer) Start() {
+	zlog.SetLogLevel(zlog.LogInfo)
+	// zlog.Debug("===> 调试Debug：debug不应该出现")
+	// zlog.Info("===> 调试Debug：info应该出现")
+	// zlog.Warn("===> 调试Debug：warn应该出现")
+	// zlog.Error("===> 调试Debug：error应该出现")
+
 	zconf.GlobalObject.Mode = m.Conf.Mode
 	zconf.GlobalObject.Name = m.Conf.Name
 	zconf.GlobalObject.Host = m.Conf.Host
@@ -93,12 +100,12 @@ func OnConnectionAdd(conn ziface.IConnection) {
 	//将当前新上线玩家添加到worldManager中
 	core.WorldMgrObj.AddPlayer(player)
 	//将该连接绑定属性PID
-	conn.SetProperty("pID", player.PID)
+	conn.SetProperty("pID", player.Pid)
 	//同步周边玩家上线信息，与现实周边玩家信息
 	//player.SyncSurrounding()
 	//同步当前玩家的初始化坐标信息给客户端，走MsgID:200消息
 	//player.BroadCastStartPosition()
-	fmt.Println("=====> Player pIDID = ", player.PID, " arrived ====")
+	fmt.Println("=====> Player pIDID = ", player.Pid, " arrived ====")
 }
 
 // 当客户端断开连接的时候的hook函数

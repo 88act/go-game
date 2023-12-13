@@ -7,6 +7,7 @@ import (
 	"go-cms/app/game/cmd/api/internal/gameserver/pb"
 
 	"github.com/aceld/zinx/ziface"
+	"github.com/aceld/zinx/zlog"
 	"github.com/aceld/zinx/znet"
 	"github.com/gogf/gf/util/gconv"
 
@@ -20,16 +21,13 @@ type LoginRouter struct {
 // Ping Handle
 func (m *LoginRouter) Handle(request ziface.IRequest) {
 
-	fmt.Println("接收到 login  1")
 	msg := &pb.Login{}
 	err := proto.Unmarshal(request.GetData(), msg)
 	if err != nil {
-		fmt.Println(" 消息解压失败 Unmarshal error ", err, " data = ", request.GetData())
+		zlog.Errorf()
 		return
 	}
-	fmt.Println("接收到 login  msg  Username   Plat =", msg.Username, msg.Plat)
 
-	//2. 得知当前的消息是从哪个玩家传递来的,从连接属性pID中获取
 	pID, err := request.GetConnection().GetProperty("pID")
 	if err != nil {
 		fmt.Println("GetProperty pID error", err)

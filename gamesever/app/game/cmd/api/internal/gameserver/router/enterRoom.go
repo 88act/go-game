@@ -50,7 +50,7 @@ func (m *EnterRoomRouter) Handle(request ziface.IRequest) {
 	//TODO: 修改为 每次都推送全部用户  20231024
 	//resp.UserList = []*pb.UserInfo{}
 	//resp.UserList = append(resp.UserList, player.Userinfo)
-	core.WorldMgrObj.SendRoom(pb.S_EnterRoomResp, resp, msg.RoomId, player.PID, player.Userinfo.CuId)
+	core.WorldMgrObj.SendRoom(pb.S_EnterRoomResp, resp, msg.RoomId, player.Pid)
 
 	if err != nil {
 		zlog.Error(err)

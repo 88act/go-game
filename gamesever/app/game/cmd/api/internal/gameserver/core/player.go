@@ -1,386 +1,394 @@
 package core
 
 import (
-	"fmt"
+	"errors"
 	"math/rand"
 	"sync"
-	"time"
 
 	"go-cms/app/game/cmd/api/internal/gameserver/pb"
 
 	"github.com/aceld/zinx/ziface"
-	"google.golang.org/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
-// 玩家对象
+// Player object
 type Player struct {
-	PID      int64              //玩家ID
-	Conn     ziface.IConnection //当前玩家的连接
-	RoomId   int64              // RoomId
-	X        float32            //平面x坐标
-	Y        float32            //高度
-	Z        float32            //平面y坐标 (注意不是Y)
-	V        float32            //旋转0-360度
-	Userinfo *pb.UserInfo       // info
+	Pid      int64              // Player ID 与userID 一致
+	Conn     ziface.IConnection // Current player's connection
+	X        float32            // Planar x coordinate(平面x坐标)
+	Y        float32            // Height(高度)
+	Z        float32            // Planar y coordinate (Note: not Y)- 平面y坐标 (注意不是Y)
+	V        float32            //  Rotation 0-360 degrees(旋转0-360度)
+	RoomId   int64              // RoomId //场景/房间id
+	Userinfo *pb.UserInfo       // 用户资料
 }
 
-/*
-Player ID 生成器
-*/
-var PIDGen int64 = 1  //用来生成玩家ID的计数器
-var IDLock sync.Mutex //保护PIDGen的互斥机制
+// Player ID Generator
+var PIDGen int64 = 1  // Counter for generating player IDs(用来生成玩家ID的计数器)
+var IDLock sync.Mutex // Mutex for protecting PIDGen(保护PIDGen的互斥机制)
 
-// 创建一个玩家对象
+// NewPlayer Create a player object
 func NewPlayer(conn ziface.IConnection) *Player {
-	//生成一个PID
 	IDLock.Lock()
 	ID := PIDGen
 	PIDGen++
 	IDLock.Unlock()
-	uinfo := pb.UserInfo{}
+
 	p := &Player{
-		PID:      ID,
-		Conn:     conn,
-		RoomId:   1000,                         // 默认 房间id
-		X:        float32(160 + rand.Intn(50)), //随机在160坐标点 基于X轴偏移若干坐标
-		Y:        0,                            //高度为0
-		Z:        float32(134 + rand.Intn(50)), //随机在134坐标点 基于Y轴偏移若干坐标
-		V:        0,                            //角度为0，尚未实现
-		Userinfo: &uinfo,
+		Pid:  ID,
+		Conn: conn,
+		X:    float32(160 + rand.Intn(50)), // Randomly offset on the X-axis based on the point 160(随机在160坐标点 基于X轴偏移若干坐标)
+		Y:    0,                            // Height is 0
+		Z:    float32(134 + rand.Intn(50)), // Randomly offset on the Y-axis based on the point 134(随机在134坐标点 基于Y轴偏移若干坐标)
+		V:    0,                            // Angle is 0, not yet implemented(角度为0，尚未实现)
 	}
 
 	return p
 }
 
-// // 告知客户端pID,同步已经生成的玩家ID给客户端
-// func (p *Player) SyncPID() {
-// 	//组建MsgID0 proto数据
-// 	data := &pb.SyncPID{
-// 		PID: p.PID,
-// 	}
-
-// 	//发送数据给客户端
-// 	p.SendMsg(1, data)
-// }
-
-// 广播玩家自己的出生地点
-func (p *Player) BroadCastStartPosition() {
-
-	//组建MsgID200 proto数据
-	msg := &pb.BroadCast{
-		PID: p.PID,
-		Tp:  2, //TP2 代表广播坐标
-		Data: &pb.BroadCast_P{
-			P: &pb.Position{
-				X: p.X,
-				Y: p.Y,
-				Z: p.Z,
-				V: p.V,
-			},
-		},
-	}
-
-	//发送数据给客户端
-	p.SendMsg(200, msg)
-}
-
-// 给当前玩家周边的(九宫格内)玩家广播自己的位置，让他们显示自己
-func (p *Player) SyncSurrounding() {
-	//1 根据自己的位置，获取周围九宫格内的玩家pID
-	pIDs := WorldMgrObj.AoiMgr.GetPIDsByPos(p.X, p.Z)
-	//2 根据pID得到所有玩家对象
-	players := make([]*Player, 0, len(pIDs))
-	//3 给这些玩家发送MsgID:200消息，让自己出现在对方视野中
-	for _, pID := range pIDs {
-		players = append(players, WorldMgrObj.GetPlayerByPID(int64(pID)))
-	}
-	//3.1 组建MsgID200 proto数据
-	msg := &pb.BroadCast{
-		PID: p.PID,
-		Tp:  2, //TP2 代表广播坐标
-		Data: &pb.BroadCast_P{
-			P: &pb.Position{
-				X: p.X,
-				Y: p.Y,
-				Z: p.Z,
-				V: p.V,
-			},
-		},
-	}
-	//3.2 每个玩家分别给对应的客户端发送200消息，显示人物
-	for _, player := range players {
-		player.SendMsg(200, msg)
-	}
-	//4 让周围九宫格内的玩家出现在自己的视野中
-	//4.1 制作Message SyncPlayers 数据
-	playersData := make([]*pb.Player, 0, len(players))
-	for _, player := range players {
-		p := &pb.Player{
-			PID: player.PID,
-			P: &pb.Position{
-				X: player.X,
-				Y: player.Y,
-				Z: player.Z,
-				V: player.V,
-			},
-		}
-		playersData = append(playersData, p)
-	}
-
-	//4.2 封装SyncPlayer protobuf数据
-	SyncPlayersMsg := &pb.SyncPlayers{
-		Ps: playersData[:],
-	}
-
-	//4.3 给当前玩家发送需要显示周围的全部玩家数据
-	p.SendMsg(202, SyncPlayersMsg)
-}
-
-// 对世界聊天
-func (p *Player) Talk(content string) {
-	//1. 组建MsgID200 proto数据
-	msg := &pb.BroadCast{
-		PID: p.PID,
-		Tp:  1, //TP 1 代表聊天广播
-		Data: &pb.BroadCast_Content{
-			Content: content,
-		},
-	}
-
-	//2. 得到当前世界所有的在线玩家
-	players := WorldMgrObj.GetAllPlayers()
-
-	//3. 向所有的玩家发送MsgID:200消息
-	for _, player := range players {
-		player.SendMsg(200, msg)
-	}
-}
-
-// 广播玩家位置移动
+// UpdatePos Broadcast player position update
+// (广播玩家位置移动)
 func (p *Player) UpdatePos(x float32, y float32, z float32, v float32) {
 
-	//触发消失视野和添加视野业务
-	//计算旧格子gID
-	oldGID := WorldMgrObj.AoiMgr.GetGIDByPos(p.X, p.Z)
-	//计算新格子gID
-	newGID := WorldMgrObj.AoiMgr.GetGIDByPos(x, z)
+	// Trigger visibility change and addition business
+	// Calculate the old grid gID
+	// 触发消失视野和添加视野业务
+	// 计算旧格子gID
+	oldGID := GetWM().GetRoom(p.RoomId).GetGIDByPos(p.X, p.Z)
+	// Calculate the new grid gID
+	// 计算新格子gID
+	newGID := GetWM().GetRoom(p.RoomId).GetGIDByPos(x, z)
 
-	//更新玩家的位置信息
+	// Update the player's position information
+	// 更新玩家的位置信息
 	p.X = x
 	p.Y = y
 	p.Z = z
 	p.V = v
 
 	if oldGID != newGID {
-		//触发gird切换
-		//把pID从就的aoi格子中删除
-		WorldMgrObj.AoiMgr.RemovePIDFromGrID(int(p.PID), oldGID)
-		//把pID添加到新的aoi格子中去
-		WorldMgrObj.AoiMgr.AddPIDToGrID(int(p.PID), newGID)
+		// Trigger grid switch
+		// Remove pID from the old aoi grid
+		// 触发gird切换
+		// 把pID从就的aoi格子中删除
+		GetWM().GetRoom(p.RoomId).RemovePIDFromGrID(int64(p.Pid), oldGID)
+
+		// 把pID添加到新的aoi格子中去
+		// Add pID to the new aoi grid
+		GetWM().GetRoom(p.RoomId).AddPIDToGrID(p.Pid, newGID)
 
 		_ = p.OnExchangeAoiGrID(oldGID, newGID)
 	}
 
-	//组装protobuf协议，发送位置给周围玩家
-	msg := &pb.BroadCast{
-		PID: p.PID,
-		Tp:  4, //4- 移动之后的坐标信息
-		Data: &pb.BroadCast_P{
-			P: &pb.Position{
-				X: p.X,
-				Y: p.Y,
-				Z: p.Z,
-				V: p.V,
-			},
-		},
-	}
+	// // Assemble protobuf data, send position to surrounding players
+	// // 组装protobuf协议，发送位置给周围玩家
+	// msg := &pb.BroadCast{
+	// 	PID: p.Uid,
+	// 	Tp:  4, //Tp:4  Coordinates information after movement(移动之后的坐标信息)
+	// 	Data: &pb.BroadCast_P{
+	// 		P: &pb.Position{
+	// 			X: p.X,
+	// 			Y: p.Y,
+	// 			Z: p.Z,
+	// 			V: p.V,
+	// 		},
+	// 	},
+	// }
 
-	//获取当前玩家周边全部玩家
-	players := p.GetSurroundingPlayers()
-	//向周边的每个玩家发送MsgID:200消息，移动位置更新消息
-	for _, player := range players {
-		player.SendMsg(200, msg)
-	}
+	// // Get all players around the current player
+	// // (获取当前玩家周边全部玩家)
+	// players := p.GetSurroundingPlayers()
+
+	// // Send MsgID:200 message to each player's client, updating position after movement
+	// // (向周边的每个玩家发送MsgID:200消息，移动位置更新消息)
+	// for _, player := range players {
+	// 	player.SendMsg(200, msg)
+	// }
 }
 
 func (p *Player) OnExchangeAoiGrID(oldGID, newGID int) error {
-	//获取就的九宫格成员
-	oldGrIDs := WorldMgrObj.AoiMgr.GetSurroundGrIDsByGID(oldGID)
+	// Get members in the old nine-grid from the old grid
+	// (获取就的九宫格成员)
+	oldGrIDs := GetWM().GetRoom(p.RoomId).GetSurroundGrIDsByGID(oldGID)
 
-	//为旧的九宫格成员建立哈希表,用来快速查找
+	// Create a hash table for the old nine-grid members to quickly search
+	// 为旧的九宫格成员建立哈希表,用来快速查找
 	oldGrIDsMap := make(map[int]bool, len(oldGrIDs))
 	for _, grID := range oldGrIDs {
 		oldGrIDsMap[grID.GID] = true
 	}
 
-	//获取新的九宫格成员
-	newGrIDs := WorldMgrObj.AoiMgr.GetSurroundGrIDsByGID(newGID)
-	//为新的九宫格成员建立哈希表,用来快速查找
+	// Get members in the new nine-grid from the new grid
+	// 获取新的九宫格成员
+	newGrIDs := GetWM().GetRoom(p.RoomId).GetSurroundGrIDsByGID(newGID)
+
+	// Create a hash table for the new nine-grid members to quickly search
+	// 为新的九宫格成员建立哈希表,用来快速查找
 	newGrIDsMap := make(map[int]bool, len(newGrIDs))
 	for _, grID := range newGrIDs {
 		newGrIDsMap[grID.GID] = true
 	}
 
-	//------ > 处理视野消失 <-------
-	offlineMsg := &pb.SyncPID{
-		PID: p.PID,
-	}
+	// //------ > Handle visibility disappearance (处理视野消失) <-------
+	// offlineMsg := &pb.SyncPID{
+	// 	PID: p.PID,
+	// }
 
-	//找到在旧的九宫格中出现,但是在新的九宫格中没有出现的格子
-	leavingGrIDs := make([]*GrID, 0)
-	for _, grID := range oldGrIDs {
-		if _, ok := newGrIDsMap[grID.GID]; !ok {
-			leavingGrIDs = append(leavingGrIDs, grID)
-		}
-	}
+	// // (找到在旧的九宫格中出现,但是在新的九宫格中没有出现的格子)
+	// leavingGrIDs := make([]*GrID, 0)
+	// for _, grID := range oldGrIDs {
+	// 	if _, ok := newGrIDsMap[grID.GID]; !ok {
+	// 		leavingGrIDs = append(leavingGrIDs, grID)
+	// 	}
+	// }
 
-	//获取需要消失的格子中的全部玩家
-	for _, grID := range leavingGrIDs {
-		players := WorldMgrObj.GetPlayersByGID(grID.GID)
-		for _, player := range players {
-			//让自己在其他玩家的客户端中消失
-			player.SendMsg(201, offlineMsg)
+	// // Get all players in the disappearing grids
+	// // (获取需要消失的格子中的全部玩家)
+	// for _, grID := range leavingGrIDs {
+	// 	players := WorldMgrObj.GetPlayersByGID(grID.GID)
+	// 	for _, player := range players {
 
-			//将其他玩家信息 在自己的客户端中消失
-			anotherOfflineMsg := &pb.SyncPID{
-				PID: player.PID,
-			}
-			p.SendMsg(201, anotherOfflineMsg)
-			time.Sleep(200 * time.Millisecond)
-		}
-	}
+	// 		// Make oneself disappear in the views of other players
+	// 		// 让自己在其他玩家的客户端中消失
+	// 		player.SendMsg(201, offlineMsg)
 
-	//------ > 处理视野出现 <-------
+	// 		// Make other players' information disappear in one's own client
+	// 		// 将其他玩家信息 在自己的客户端中消失
+	// 		anotherOfflineMsg := &pb.SyncPID{
+	// 			PID: player.PID,
+	// 		}
+	// 		p.SendMsg(201, anotherOfflineMsg)
+	// 		time.Sleep(200 * time.Millisecond)
+	// 	}
+	// }
 
-	//找到在新的九宫格内出现,但是没有在就的九宫格内出现的格子
-	enteringGrIDs := make([]*GrID, 0)
-	for _, grID := range newGrIDs {
-		if _, ok := oldGrIDsMap[grID.GID]; !ok {
-			enteringGrIDs = append(enteringGrIDs, grID)
-		}
-	}
+	// // 找到在新的九宫格内出现,但是没有在就的九宫格内出现的格子
+	// enteringGrIDs := make([]*GrID, 0)
+	// for _, grID := range newGrIDs {
+	// 	if _, ok := oldGrIDsMap[grID.GID]; !ok {
+	// 		enteringGrIDs = append(enteringGrIDs, grID)
+	// 	}
+	// }
 
-	onlineMsg := &pb.BroadCast{
-		PID: p.PID,
-		Tp:  2,
-		Data: &pb.BroadCast_P{
-			P: &pb.Position{
-				X: p.X,
-				Y: p.Y,
-				Z: p.Z,
-				V: p.V,
-			},
-		},
-	}
+	// // onlineMsg := &pb.BroadCast{
+	// // 	PID: p.PID,
+	// // 	Tp:  2,
+	// // 	Data: &pb.BroadCast_P{
+	// // 		P: &pb.Position{
+	// // 			X: p.X,
+	// // 			Y: p.Y,
+	// // 			Z: p.Z,
+	// // 			V: p.V,
+	// // 		},
+	// // 	},
+	// // }
 
-	//获取需要显示格子的全部玩家
-	for _, grID := range enteringGrIDs {
-		players := WorldMgrObj.GetPlayersByGID(grID.GID)
+	// // 获取需要显示格子的全部玩家
+	// for _, grID := range enteringGrIDs {
+	// 	players := WorldMgrObj.GetPlayersByGID(grID.GID)
 
-		for _, player := range players {
-			//让自己出现在其他人视野中
-			player.SendMsg(200, onlineMsg)
+	// 	for _, player := range players {
+	// 		// // Make oneself appear in the views of other players
+	// 		// // 让自己出现在其他人视野中
+	// 		// player.SendMsg(200, onlineMsg)
 
-			//让其他人出现在自己的视野中
-			anotherOnlineMsg := &pb.BroadCast{
-				PID: player.PID,
-				Tp:  2,
-				Data: &pb.BroadCast_P{
-					P: &pb.Position{
-						X: player.X,
-						Y: player.Y,
-						Z: player.Z,
-						V: player.V,
-					},
-				},
-			}
+	// 		// // Make other players appear in one's own client
+	// 		// // 让其他人出现在自己的视野中
+	// 		// anotherOnlineMsg := &pb.BroadCast{
+	// 		// 	PID: player.PID,
+	// 		// 	Tp:  2,
+	// 		// 	Data: &pb.BroadCast_P{
+	// 		// 		P: &pb.Position{
+	// 		// 			X: player.X,
+	// 		// 			Y: player.Y,
+	// 		// 			Z: player.Z,
+	// 		// 			V: player.V,
+	// 		// 		},
+	// 		// 	},
+	// 		// }
 
-			time.Sleep(200 * time.Millisecond)
-			p.SendMsg(200, anotherOnlineMsg)
-		}
-	}
+	// 		// time.Sleep(200 * time.Millisecond)
+	// 		// p.SendMsg(200, anotherOnlineMsg)
+	// 	}
+	// }
 
 	return nil
 }
 
-// 获得当前玩家的AOI周边玩家信息
-func (p *Player) GetSurroundingPlayers() []*Player {
-	//得到当前AOI区域的所有pID
-	pIDs := WorldMgrObj.AoiMgr.GetPIDsByPos(p.X, p.Z)
-
-	//将所有pID对应的Player放到Player切片中
+// 获得当前玩家的可视周边玩家
+func (p *Player) GetNearPlayer() []*Player {
+	// 得到当前AOI区域的所有pID
+	pIDs := GetWM().GetRoom(p.RoomId).GetPIDsByPos(p.X, p.Z)
+	// 将所有pID对应的Player放到Player切片中
 	players := make([]*Player, 0, len(pIDs))
 	for _, pID := range pIDs {
-		players = append(players, WorldMgrObj.GetPlayerByPID(int64(pID)))
+		players = append(players, WorldMgrObj.GetPlayerByPID(pID))
 	}
-
 	return players
 }
 
+// Player logs off
 // 玩家下线
-func (p *Player) LostConnection(pid int64, userId int64, logoutType int32) {
-	//1 获取周围AOI九宫格内的玩家
-	// players := WorldMgrObj.GetAllPlayers()
+func (p *Player) LostConnection() {
 
-	// msg := &pb.LogoutResp{
-	// 	UserId: userId,
-	// 	Type:   logoutType, // 1 主动退出 2 掉线 3 重复登录
-	// }
+	// 获取周围AOI九宫格内的玩家
+	playerList := p.GetNearPlayer()
 
-	//3 向所有人发送消息  不包括自己
-	// for _, player := range players {
-	// 	if player.PID != pid && player.Userinfo.UserId != userId {
-	// 		player.SendMsg(pb.S_Logout, msg)
-	// 	}
-	// }
-	//TODO: 修改为 每次都推送全部用户  20231024
+	msg := &pb.LogoutResp{
+		UserId: p.Pid,
+	}
 
-	resp := &pb.EnterRoomResp{}
-	resp.RoomId = 1000
-	resp.Type = 1
-	resp.Name = "第一会议室"
-	resp.Password = "123456"
-	resp.MaxUser = 20
-	resp.Image = "https://www.teamilo.com/res/sys/0/20220811/ecd4ffa5304b43c995f13a3c9516fd98.jpg"
-	//u := &pb.UserInfo{Id: 1, Username: "用户1", Nickname: "昵称1", Sex: 1, Rtmp: "rtmp://im.teamilo.com/room/1000/1", Image: "https://profile-avatar.csdnimg.cn/acff5ee889804bef9fb6edd7e6cfc679_qq_33023933.jpg!1"}
-	//u2 := &pb.UserInfo{Id: 2, Username: "用户2", Nickname: "昵称2", Sex: 2, Rtmp: "rtmp://im.teamilo.com/room/1000/2", Image: "https://profile-avatar.csdnimg.cn/acff5ee889804bef9fb6edd7e6cfc679_qq_33023933.jpg!1"}
-	//uLIst = append(uLIst, u, u2)
-	//
-	//4 世界管理器将当前玩家从AOI中摘除
-	//WorldMgrObj.AoiMgr.RemoveFromGrIDByPos(int(p.PID), p.X, p.Z)
-	WorldMgrObj.RemovePlayerByPID(p.PID)
+	for _, player := range playerList {
+		player.SendMsg(201, msg)
+	}
 
-	resp.UserList = WorldMgrObj.GetRoomUsers(resp.RoomId, p.Userinfo.CuId)
-	WorldMgrObj.SendRoom(pb.S_EnterRoomResp, resp, resp.RoomId, pid, p.Userinfo.CuId)
-
+	//  当前玩家从AOI中摘除
+	GetWM().GetRoom(p.RoomId).RemoveFromGrIDByPos(p.Pid, p.X, p.Z)
+	GetWM().RemovePlayerByPID(p.Pid)
 }
 
-/*
-发送消息给客户端，
-主要是将pb的protobuf数据序列化之后发送
-*/
-func (p *Player) SendMsg(msgID uint32, data proto.Message) {
+// SendMsg
+func (p *Player) SendMsg(msgID uint32, data proto.Message) error {
 	if p.Conn == nil {
-		fmt.Println(" player 连接为空")
-		return
+		return errors.New("player连接为空")
 	}
 	if !p.Conn.IsAlive() {
-		fmt.Println("player 连接为不存活 IsAlive ")
-		return
+		return errors.New("player连接为不存活 IsAlive")
 	}
-	//fmt.Printf("before Marshal data = %+v\n", data)
-	//将proto Message结构体序列化
-	msg, err := proto.Marshal(data)
+	msgByte, err := proto.Marshal(data)
 	if err != nil {
-		fmt.Println("marshal msg err: ", err)
-		return
+		return errors.New("结构体序列化错误" + err.Error())
 	}
-	//fmt.Printf("after Marshal data = %+v\n", msg)
-	//调用Zinx框架的SendMsg发包
-
-	if err := p.Conn.SendMsg(msgID, msg); err != nil {
-		fmt.Println("Player SendMsg error !")
-		return
+	err = p.Conn.SendMsg(msgID, msgByte)
+	if err != nil {
+		return err
+	} else {
+		return nil
 	}
-
 }
+
+// // SyncPID Inform the client about pID and synchronize the generated player ID to the client
+// // (告知客户端pID,同步已经生成的玩家ID给客户端)
+// func (p *Player) SyncPID() {
+// 	// Assemble MsgID0 proto data
+// 	// (组建MsgID0 proto数据)
+// 	data := &pb.SyncPID{
+// 		PID: p.PID,
+// 	}
+
+// 	// Send data to the client
+// 	// (发送数据给客户端)
+// 	p.SendMsg(1, data)
+// }
+
+// BroadCastStartPosition Broadcast the player's starting position
+// (广播玩家自己的出生地点)
+// func (p *Player) BroadCastStartPosition() {
+// 	// Assemble MsgID200 proto data
+// 	// (组建MsgID200 proto数据)
+// 	msg := &pb.BroadCast{
+// 		PID: p.PID,
+// 		Tp:  2, //TP:2  represents broadcasting coordinates (广播坐标)
+// 		Data: &pb.BroadCast_P{
+// 			P: &pb.Position{
+// 				X: p.X,
+// 				Y: p.Y,
+// 				Z: p.Z,
+// 				V: p.V,
+// 			},
+// 		},
+// 	}
+// 	// Send data to the client
+// 	// 发送数据给客户端
+// 	p.SendMsg(200, msg)
+// }
+
+// SyncSurrounding Broadcast the player's position to the surrounding players in the same grid
+// 给当前玩家周边的(九宫格内)玩家广播自己的位置，让他们显示自己
+// func (p *Player) SyncSurrounding() {
+// 	//1 Get pIDs of players in the surrounding nine grids based on the player's position
+// 	// 根据自己的位置，获取周围九宫格内的玩家pID
+// 	pIDs := WorldMgrObj.AoiMgr.GetPIDsByPos(p.X, p.Z)
+
+// 	// 2 Get all player objects based on the pIDs
+// 	// 根据pID得到所有玩家对象
+// 	players := make([]*Player, 0, len(pIDs))
+
+// 	// 3 Send MsgID:200 message to these players to display themselves in each other's views
+// 	// 给这些玩家发送MsgID:200消息，让自己出现在对方视野中
+// 	for _, pID := range pIDs {
+// 		players = append(players, WorldMgrObj.GetPlayerByPID(int32(pID)))
+// 	}
+
+// 	// 3.1 Assemble MsgID200 proto data
+// 	// 组建MsgID200 proto数据
+// 	msg := &pb.BroadCast{
+// 		PID: p.PID,
+// 		Tp:  2, //TP:2 represents broadcasting coordinates (广播坐标)
+// 		Data: &pb.BroadCast_P{
+// 			P: &pb.Position{
+// 				X: p.X,
+// 				Y: p.Y,
+// 				Z: p.Z,
+// 				V: p.V,
+// 			},
+// 		},
+// 	}
+
+// 	// 3.2 Send the 200 message to each player's client to display characters
+// 	// 每个玩家分别给对应的客户端发送200消息，显示人物
+// 	for _, player := range players {
+// 		player.SendMsg(200, msg)
+// 	}
+// 	// 4 Make surrounding players in the nine grids appear in the player's view
+// 	// 让周围九宫格内的玩家出现在自己的视野中
+
+// 	// 4.1 Create Message SyncPlayers data
+// 	// 制作Message SyncPlayers 数据
+// 	playersData := make([]*pb.Player, 0, len(players))
+// 	for _, player := range players {
+// 		p := &pb.Player{
+// 			PID: player.PID,
+// 			P: &pb.Position{
+// 				X: player.X,
+// 				Y: player.Y,
+// 				Z: player.Z,
+// 				V: player.V,
+// 			},
+// 		}
+// 		playersData = append(playersData, p)
+// 	}
+
+// 	// 4.2 Encapsulate SyncPlayers protobuf data
+// 	// 封装SyncPlayer protobuf数据
+// 	SyncPlayersMsg := &pb.SyncPlayers{
+// 		Ps: playersData[:],
+// 	}
+
+// 	// 4.3 Send all player data to the current player to display surrounding players
+// 	// 给当前玩家发送需要显示周围的全部玩家数据
+// 	p.SendMsg(202, SyncPlayersMsg)
+// }
+
+// Talk Broadcast player chat
+// 广播玩家聊天
+// func (p *Player) Talk(content string) {
+// 	// 1. Assemble MsgID200 proto data
+// 	msg := &pb.BroadCast{
+// 		PID: p.PID,
+// 		Tp:  1, // TP: 1 represents chat broadcast (代表聊天广播)
+// 		Data: &pb.BroadCast_Content{
+// 			Content: content,
+// 		},
+// 	}
+
+// 	// 2. Get all online players in the current world
+// 	// 得到当前世界所有的在线玩家
+// 	players := WorldMgrObj.GetAllPlayers()
+
+// 	// 3. Send MsgID:200 message to all players
+// 	// 向所有的玩家发送MsgID:200消息
+// 	for _, player := range players {
+// 		player.SendMsg(200, msg)
+// 	}
+// }

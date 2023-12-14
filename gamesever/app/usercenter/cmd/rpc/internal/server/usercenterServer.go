@@ -5,10 +5,13 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"go-cms/app/usercenter/cmd/rpc/internal/logic"
 	"go-cms/app/usercenter/cmd/rpc/internal/svc"
 	"go-cms/app/usercenter/cmd/rpc/pb"
+
+	"github.com/zeromicro/go-zero/core/logc"
 )
 
 type UsercenterServer struct {
@@ -34,7 +37,13 @@ func (s *UsercenterServer) Register(ctx context.Context, in *pb.RegisterReq) (*p
 
 func (s *UsercenterServer) GetUserInfo(ctx context.Context, in *pb.GetUserInfoReq) (*pb.GetUserInfoResp, error) {
 	l := logic.NewGetUserInfoLogic(ctx, s.svcCtx)
-	return l.GetUserInfo(in)
+	resp,err:= l.GetUserInfo(in)
+	if err != nil {
+		logMsg := fmt.Sprintf("GetUserInfo,in.Id=%d,err=%s",in.Id,err.Error())
+        fmt.Println(logMsg)
+		logc.Error(ctx,logMsg)
+	}
+	return resp,err
 }
 
 func (s *UsercenterServer) GetUserAuthByAuthKey(ctx context.Context, in *pb.GetUserAuthByAuthKeyReq) (*pb.GetUserAuthByAuthKeyResp, error) {

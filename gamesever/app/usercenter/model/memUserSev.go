@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"errors"
 	"go-cms/common/mycache"
 	"go-cms/common/utils"
 
@@ -102,13 +103,13 @@ func (m *MemUserSev) UpdateExpr(ctx context.Context, data MemUser, column string
 func (m *MemUserSev) Get(ctx context.Context, id int64, fields string) (obj MemUser, err error) {
 
 	if id <= 0 {
-		return MemUser{}, nil
+		return MemUser{}, errors.New("参数无效")
 	}
 	cacheKey := m.GetCacheKey(m.CacheKeyPre, id)
-	if cacheData, err := mycache.GetCache().GetObj(cacheKey); err == nil {
-		obj = cacheData.(MemUser)
-		return obj, err
-	}
+	// if cacheData, err := mycache.GetCache().GetObj(cacheKey); err == nil {
+	// 	obj = cacheData.(MemUser)
+	// 	return obj, err
+	// }
 	if utils.IsEmpty(fields) {
 		err = m.Db.WithContext(ctx).Where("id = ?", id).First(&obj).Error
 	} else {

@@ -11,6 +11,8 @@ import (
 	"go-cms/app/game/cmd/api/internal/gameserver/pb"
 	"go-cms/app/game/cmd/api/internal/gameserver/router"
 
+	"go-cms/app/game/cmd/api/internal/svc"
+
 	"github.com/aceld/zinx/zconf"
 	"github.com/aceld/zinx/ziface"
 	"github.com/aceld/zinx/zlog"
@@ -22,27 +24,27 @@ import (
 
 type GameServer struct {
 	*rest.Server
-	Sev  ziface.IServer
-	Conf config.GameConf
+	Sev    ziface.IServer
+	Conf   config.GameConf
+	SvcCtx *svc.ServiceContext
 }
 
 var once_GameServer sync.Once = sync.Once{}
-var obj_GameServer *GameServer
+var GSObj *GameServer // 游戏服务器
 
-func GetGameServer(conf config.GameConf) *GameServer {
+func GetGameServer(conf config.GameConf, svcCtx *svc.ServiceContext) *GameServer {
 	once_GameServer.Do(func() {
-		obj_GameServer = new(GameServer)
-		obj_GameServer.Conf = conf
+		GSObj = new(GameServer)
+		GSObj.Conf = conf
+		GSObj.SvcCtx = svcCtx
 	})
-	return obj_GameServer
+	return GSObj
 }
 
 // Stop stops the gateway server.
 func (m *GameServer) Stop() {
-	fmt.Println("Stop=====1=")
 	m.Sev.Stop()
-	logx.Error("game server stop ...")
-	fmt.Println("Stop=====2=")
+	logx.Error("GameServer stop ...")
 	m.Server.Stop()
 	os.Exit(0)
 }
@@ -88,26 +90,29 @@ func (m *GameServer) Start() {
 	})
 	logx.Error("game server start ...")
 	m.Sev.Start()
+	core.GetWM().SvcCtx = m.SvcCtx
 }
 
-// 当客户端建立连接的时候的hook函数
+// 建立连接
 func OnConnectionAdd(conn ziface.IConnection) {
+	fmt.Println("有新连接请求 %d, ip=%s", conn.GetConnID(), conn.RemoteAddrString())
 	logx.Infof("有新连接请求 %d, ip=%s", conn.GetConnID(), conn.RemoteAddrString())
 	//core.GetWM().ConnList[conn.GetConnID()] = conn
 }
 
-// 当客户端断开连接的时候的hook函数
+// 断开连接
 func OnConnectionLost(conn ziface.IConnection) {
+	fmt.Println("断开连接 %d, ip=%s", conn.GetConnID(), conn.RemoteAddrString())
 	//获取当前连接的PID属性
 	pID, _ := conn.GetProperty("pID")
-	var playerID int64
-	if pID != nil {
-		playerID = pID.(int64)
+	player := core.GetWM().GetPlayerByPID(pID.(int64))
+	if player != nil {
+		logx.Error("用户断开连接 pid=", pID, player.Userinfo.Username)
+		core.GetWM().RemovePlayerByPID(player.Pid)
 	}
-
-	//根据pID获取对应的玩家对象
-	player := core.WorldMgrObj.GetPlayerByPID(pID.(int64))
-	fmt.Println("客户端断开连接 player  PID = UserId = ", pID, player.Userinfo.UserId)
+	// //根据pID获取对应的玩家对象
+	// player := core.GetWM().GetPlayerByPID(playerID)
+	// fmt.Println("客户端断开连接 player  PID = UserId = ", pID, player.Userinfo.UserId)
 	// 退出房间
 	// if player.Userinfo.RoomId > 0 {
 	// 	roomPlayer := core.WorldMgrObj.GetRoomPlayers(player.Userinfo.RoomId)
@@ -122,43 +127,29 @@ func OnConnectionLost(conn ziface.IConnection) {
 	// 		}
 	// 	}
 	// }
-	fmt.Println("触发玩家下线业务 pID=", pID, "player userid=", player.Userinfo.UserId)
-	//触发玩家下线业务
-
-	list := core.WorldMgrObj.GetAllPlayers()
-	fmt.Println(list)
-	fmt.Println("====> Player ", playerID, " 下线 或 断开 =====")
-	fmt.Println("OnConnectionLost  剩余 用户 = ", len(list))
-
+	// fmt.Println("触发玩家下线业务 pID=", pID, "player userid=", player.Userinfo.UserId)
+	// //触发玩家下线业务
+	// list := core.WorldMgrObj.GetAllPlayers()
+	// fmt.Println(list)
+	// fmt.Println("====> Player ", playerID, " 下线 或 断开 =====")
+	// fmt.Println("OnConnectionLost  剩余 用户 = ", len(list))
 }
 
-// ==================================
-// type myHeartBeatRouter struct {
-// 	znet.BaseRouter
-// }
-
-// // Handle -
-// func (r *myHeartBeatRouter) Handle(req ziface.IRequest) {
-// 	zlog.Ins().InfoF("Recv Heartbeat from %s, MsgID = %+v, Data = %s",
-// 		req.GetConnection().RemoteAddr(), req.GetMsgID(), string(req.GetData()))
-// }
-
-// 用户自定义的心跳检测消息处理方法
+// 心跳检测
 func pingMsg(conn ziface.IConnection) []byte {
-	// return []byte("heartbeat, I am server, I am alive")
 	pingResp := &pb.PingResp{}
 	pingResp.NowTime = time.Now().Format("2016-01-02 15:04:05")
 	pingResp.Sn = 1
 	data, err := proto.Marshal(pingResp)
 	if err != nil {
-		fmt.Println("err ==== ", err.Error())
+		logx.Errorf("pingMsg error connID= %d,ip=%s,err=%s ", conn.GetConnID(), conn.RemoteAddrString(), err.Error())
 	}
 	return data
 }
 
-// 用户自定义的远程连接不存活时的处理方法
+// 远程连接不存活时
 func myOnRemoteNotAlive(conn ziface.IConnection) {
-	fmt.Println(" 不存活 myOnRemoteNotAlive is Called, connID=", conn.GetConnID(), "remoteAddr = ", conn.RemoteAddr())
+	logx.Errorf("myOnRemoteNotAlive不存活 connID= %d,ip=%s ", conn.GetConnID(), conn.RemoteAddrString())
 	//关闭链接
 	conn.Stop()
 }

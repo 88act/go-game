@@ -1,36 +1,38 @@
 package router
 
 import (
+	"fmt"
+	"go-cms/app/game/cmd/api/internal/gameserver/core"
+	"go-cms/app/game/cmd/api/internal/gameserver/pb"
+
 	"github.com/aceld/zinx/ziface"
 	"github.com/aceld/zinx/znet"
+	"github.com/zeromicro/go-zero/core/logc"
+	"google.golang.org/protobuf/proto"
 )
 
 type QuitRoomRouter struct {
 	znet.BaseRouter
 }
 
-// quit 房间
-func (m *QuitRoomRouter) Handle(request ziface.IRequest) {
-	// pID, err := request.GetConnection().GetProperty("pID")
-	// if err != nil {
-	// 	fmt.Println("GetProperty pID error", err)
-	// 	request.GetConnection().Stop()
-	// 	return
-	// }
-	// msg := &pb.QuitRoom{}
-	// err = proto.Unmarshal(request.GetData(), msg)
-	// if err != nil {
-	// 	fmt.Println(" 消息解压失败  error ", err, " data = ", request.GetData())
-	// 	return
-	// }
-	// fmt.Printf("接收到 QuitRoom  UserId =%d ，roomid =%d ", msg.UserId, msg.RoomId)
-	// //3. 根据pID得到player对象
-	// player := core.WorldMgrObj.GetPlayerByPID(pID.(int64))
-	// player.Userinfo.RoomId = 0
-	// resp := &pb.QuitRoomResp{}
-	// resp.UserInfo = player.Userinfo
-	// core.WorldMgrObj.SendRoomAll(pb.S_QuitRoomResp, resp, msg.RoomId, player.Userinfo.CuId)
-	// if err != nil {
-	// 	zlog.Error(err)
-	// }
+// 退出场景
+func (m *QuitRoomRouter) Handle(req ziface.IRequest) {
+	fmt.Println("退出场景 QuitRoomRouter")
+	ctx := req.GetConnection().Context()
+	pID, err := req.GetConnection().GetProperty("pID")
+	if err != nil {
+		req.GetConnection().Stop()
+		logMsg := getLogMsg(req) + err.Error()
+		logc.Error(ctx, logMsg)
+		return
+	}
+	player := core.WorldMgrObj.GetPlayerByPID(pID.(int64))
+	msg := &pb.EnterRoom{}
+	err = proto.Unmarshal(req.GetData(), msg)
+	if err != nil {
+		logMsg := getLogMsg(req) + err.Error()
+		logc.Error(ctx, logMsg)
+		return
+	}
+	fmt.Println("退出场景 Nickname ", player.Userinfo.Nickname)
 }

@@ -1,15 +1,16 @@
-Name: cmsApi
+Name: gameApi
 Host: 0.0.0.0
 Port: 1003
 #生产模式pro (不记录sql) 开发模式 dev 
 Mode: dev 
 
 LogConf:
-  ServiceName: cmsApi
+  ServiceName: gameApi
   Level: debug
   KeepDays: 90
-  Mode: file 
-  Path: logs/cmsApi
+  # console file
+  Mode: console 
+  Path: logs/gameApi
   Rotation: daily
   MaxSize: 5110
   MaxBackups: 20
@@ -56,6 +57,19 @@ GameConf:
   LogFile: imserver.log
   HeartbeatMax: 20
   LogIsolationLevel: 3  
+
+#rpc Usercenter
+UsercenterRpcConf:
+  Endpoints:
+    - 127.0.0.1:2001
+  NonBlock: true
+
+#rpc Basic
+BasicRpcConf:
+  Endpoints:
+    - 127.0.0.1:2002
+  NonBlock: true
+
   
 #rpc
 # UsercenterRpcConf:

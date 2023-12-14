@@ -3,6 +3,7 @@ package svc
 import (
 	"context"
 	"go-cms/app/game/cmd/api/internal/config"
+	"go-cms/app/usercenter/cmd/rpc/usercenter"
 	"go-cms/common"
 	"go-cms/common/mycache"
 	"go-cms/common/myconfig"
@@ -12,6 +13,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logc"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/redis"
+	"github.com/zeromicro/go-zero/zrpc"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -20,31 +22,29 @@ type ServiceContext struct {
 	Config      config.Config
 	RedisClient *redis.Redis
 
-	//BasicRpc     basic.Basic
+	//BasicRpc      basic.Basic
+	UsercenterRpc usercenter.Usercenter
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	logc.MustSetup(c.LogConf)
 	logc.Info(context.Background(), c.Name, " 服务启动...", c.Host, " port=", c.Port)
-	//gormDB := GormMysql(c.Mode, c.DB)
 	mycache.InitObj(c.Redis.Host, c.Redis.Pass, 0)
 	myconfig.HttpRoot = c.LocalRes.BaseUrl
-
-	// 新建 gorm 数据库 链接
 	return &ServiceContext{
 		Config: c,
 		RedisClient: redis.New(c.Redis.Host, func(r *redis.Redis) {
 			r.Type = c.Redis.Type
 			r.Pass = c.Redis.Pass
 		}),
-
-		//BasicRpc:     basic.NewBasic(zrpc.MustNewClient(c.BasicRpcConf)),
+		UsercenterRpc: usercenter.NewUsercenter(zrpc.MustNewClient(c.UsercenterRpcConf)),
+		//BasicRpc:      basic.NewBasic(zrpc.MustNewClient(c.BasicRpcConf)),
 	}
 
 }
 
 func GormMysql(mode string, dbConf common.DbConf) *gorm.DB {
-	ormLogger := common.NewGormLogger(mode) // logger.Default.LogMode(logger.Info)
+	ormLogger := common.NewGormLogger(mode)
 	dialector := mysql.New(mysql.Config{
 		DSN:                       dbConf.DNS, // data source name
 		DefaultStringSize:         256,        // string 类型字段的默认长度

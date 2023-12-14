@@ -14,21 +14,14 @@ message PingResp{
 }
 
 //用户登陆 100000->200000
-message Login{	
+message GameLogin{	
 	int64  userId =1;  
 	string token =2; //token
     string plat =3;   //平台
 	string param =4; //附加参数
 }
 
-//登陆信息 200000
-message LoginResp{ 
-	int32 status =1;  //1成功 0 失败  
-	string msg =2;  //  
-	UserInfo userInfo =3;  //用户名 
-}
-
-//用户信息  
+//登陆信息 200000 
 message UserInfo{
 	int64  userId=1;     //userId 
 	string username =2;  //昵称	
@@ -39,7 +32,7 @@ message UserInfo{
     int32  online =7;	 // 1在线 0离线  
 	int64 roomId=8;     //场景id　
 	Site position =9;   //坐标
-}
+} 
  
 
 //进入场景/房间 100001->200001

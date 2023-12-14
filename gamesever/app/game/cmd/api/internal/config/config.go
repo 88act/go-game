@@ -6,6 +6,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logc"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest"
+	"github.com/zeromicro/go-zero/zrpc"
 )
 
 type Config struct {
@@ -25,7 +26,9 @@ type Config struct {
 	}
 	LogConf logc.LogConf
 
-	GameConf GameConf
+	GameConf          GameConf
+	BasicRpcConf      zrpc.RpcClientConf
+	UsercenterRpcConf zrpc.RpcClientConf
 }
 
 type GameConf struct {

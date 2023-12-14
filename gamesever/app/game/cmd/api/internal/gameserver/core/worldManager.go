@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"errors"
+	"go-cms/app/game/cmd/api/internal/svc"
 	"sync"
 
 	"github.com/golang/protobuf/proto"
@@ -13,11 +15,10 @@ type WorldManager struct {
 	Players  map[int64]*Player     //  当前在线的玩家集合)
 	pLock    sync.RWMutex          //  保护Players的互斥读写机制
 	RoomList map[int64]*AOIManager //  场景的AOI管理器
+	SvcCtx   *svc.ServiceContext
 	//ConnList map[uint64]ziface.IConnection //  当前在线的玩家集合
 	//AoiMgr   *AOIManager        // 当前世界地图的AOI规划管理器
 }
-
-var RoomList = []int64{1000, 1001, 1002}
 
 var once_WorldMgrObj sync.Once = sync.Once{}
 var WorldMgrObj *WorldManager
@@ -27,6 +28,8 @@ func GetWM() *WorldManager {
 	once_WorldMgrObj.Do(func() {
 		WorldMgrObj = &WorldManager{}
 		WorldMgrObj.Players = make(map[int64]*Player)
+		WorldMgrObj.RoomList = make(map[int64]*AOIManager)
+		var RoomList = []int64{1000, 1001, 1002}
 		for _, roomId := range RoomList {
 			room := NewAOIManager(roomId, AOI_MIN_X, AOI_MAX_X, AOI_CNTS_X, AOI_MIN_Y, AOI_MAX_Y, AOI_CNTS_Y)
 			WorldMgrObj.RoomList[roomId] = room
@@ -88,18 +91,24 @@ func (m *WorldManager) GetPlayersByGID(roomId int64, gID int) []*Player {
 
 // 给某个玩家发消息
 func (m *WorldManager) SendOne(ctx context.Context, msgId uint32, data proto.Message, pid int64) error {
-	err := m.Players[pid].SendMsg(msgId, data)
-	if err != nil {
-		logc.Error(ctx, "SendOne发送消息出错，pid=%d,msgId=%d ", pid, msgId)
+	p := m.GetPlayerByPID(pid)
+	if p != nil {
+		err := p.SendMsgObj(msgId, data)
+		return err
+	} else {
+		return errors.New("用户不存在")
 	}
-	return err
+
 }
 
 // 世界广播
 func (m *WorldManager) SendWorld(ctx context.Context, msgId uint32, data proto.Message) error {
-	var err error
+	msgByte, err := proto.Marshal(data)
+	if err != nil {
+		return errors.New("结构体序列化错误" + err.Error())
+	}
 	for _, p := range m.Players {
-		err = p.SendMsg(msgId, data)
+		err = p.SendMsg(msgId, msgByte)
 		if err != nil {
 			logc.Error(ctx, "SendWorld发送消息出错，pid=%d,msgId=%d ", p.Pid, msgId)
 		}
@@ -109,10 +118,13 @@ func (m *WorldManager) SendWorld(ctx context.Context, msgId uint32, data proto.M
 
 // 房间广播
 func (m *WorldManager) SendRoom(ctx context.Context, msgId uint32, data proto.Message, roomId int64) error {
-	var err error
+	msgByte, err := proto.Marshal(data)
+	if err != nil {
+		return errors.New("结构体序列化错误" + err.Error())
+	}
 	for _, p := range m.Players {
 		if p.RoomId == roomId {
-			err = p.SendMsg(msgId, data)
+			err = p.SendMsg(msgId, msgByte)
 			if err != nil {
 				logc.Error(ctx, "SendRoom发送消息出错，roomid =%d, pid=%d,msgId=%d ", roomId, p.Pid, msgId)
 			}
@@ -124,9 +136,12 @@ func (m *WorldManager) SendRoom(ctx context.Context, msgId uint32, data proto.Me
 // 可视图内广播
 func (m *WorldManager) SendView(ctx context.Context, msgId uint32, data proto.Message, roomId int64, gID int) error {
 	viewPlayers := m.GetPlayersByGID(roomId, gID)
-	var err error
+	msgByte, err := proto.Marshal(data)
+	if err != nil {
+		return errors.New("结构体序列化错误" + err.Error())
+	}
 	for _, p := range viewPlayers {
-		err = p.SendMsg(msgId, data)
+		err = p.SendMsg(msgId, msgByte)
 		if err != nil {
 			logc.Error(ctx, "SendView发送消息出错 roomid =%d, pid=%d,msgId=%d,gID=%d ", roomId, p.Pid, msgId, gID)
 		}

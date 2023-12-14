@@ -11,7 +11,7 @@ const (
 	AOI_CNTS_Y int = 20
 )
 
-// AOIManager AOI management module(AOI管理模块)
+//  场景管理器
 type AOIManager struct {
 	RoomId int64         // 场景/房间 id
 	MinX   int           // Left boundary coordinate of the area(区域左边界坐标)
@@ -37,7 +37,6 @@ func NewAOIManager(roomId int64, minX, maxX, cntsX, minY, maxY, cntsY int) *AOIM
 	}
 
 	// Initialize all grids in the AOI region (给AOI初始化区域中所有的格子)
-
 	for y := 0; y < cntsY; y++ {
 		for x := 0; x < cntsX; x++ {
 			// Calculate the grid ID

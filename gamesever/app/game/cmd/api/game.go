@@ -24,7 +24,7 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 	server := rest.MustNewServer(c.RestConf)
 	handler.RegisterHandlers(server, ctx)
-	gameServer := gameserver.GetGameServer(c.GameConf)
+	gameServer := gameserver.GetGameServer(c.GameConf, ctx)
 	//defer server.Stop()
 	//server.Start()
 	group := service.NewServiceGroup()

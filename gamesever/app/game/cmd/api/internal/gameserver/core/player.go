@@ -11,7 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-// Player object
+// 玩家类
 type Player struct {
 	Pid      int64              // Player ID 与userID 一致
 	Conn     ziface.IConnection // Current player's connection
@@ -28,14 +28,13 @@ var PIDGen int64 = 1  // Counter for generating player IDs(用来生成玩家ID�
 var IDLock sync.Mutex // Mutex for protecting PIDGen(保护PIDGen的互斥机制)
 
 // NewPlayer Create a player object
-func NewPlayer(conn ziface.IConnection) *Player {
+func NewPlayer(conn ziface.IConnection, pid int64) *Player {
 	// IDLock.Lock()
 	// ID := PIDGen
 	// PIDGen++
 	// IDLock.Unlock()
-
 	p := &Player{
-		Pid:  1,
+		Pid:  pid,
 		Conn: conn,
 		X:    float32(160 + rand.Intn(50)), // Randomly offset on the X-axis based on the point 160(随机在160坐标点 基于X轴偏移若干坐标)
 		Y:    0,                            // Height is 0
@@ -104,6 +103,73 @@ func (p *Player) UpdatePos(x float32, y float32, z float32, v float32) {
 	// for _, player := range players {
 	// 	player.SendMsg(200, msg)
 	// }
+}
+
+// 获得当前玩家的可视周边玩家
+func (p *Player) GetNearPlayer() []*Player {
+	// 得到当前AOI区域的所有pID
+	pIDs := GetWM().GetRoom(p.RoomId).GetPIDsByPos(p.X, p.Z)
+	// 将所有pID对应的Player放到Player切片中
+	players := make([]*Player, 0, len(pIDs))
+	for _, pID := range pIDs {
+		players = append(players, WorldMgrObj.GetPlayerByPID(pID))
+	}
+	return players
+}
+
+// Player logs off
+// 玩家下线
+func (p *Player) LostConnection() {
+
+	// 获取周围AOI九宫格内的玩家
+	playerList := p.GetNearPlayer()
+
+	data := &pb.LogoutResp{
+		UserId: p.Pid,
+	}
+	msgByte, _ := proto.Marshal(data)
+	for _, player := range playerList {
+		player.SendMsg(pb.S_Logout, msgByte)
+	}
+	//  当前玩家从AOI中摘除
+	GetWM().GetRoom(p.RoomId).RemoveFromGrIDByPos(p.Pid, p.X, p.Z)
+	GetWM().RemovePlayerByPID(p.Pid)
+}
+
+// SendMsg
+func (p *Player) SendMsgObj(msgId uint32, data proto.Message) error {
+	if p.Conn == nil {
+		return errors.New("player连接为空")
+	}
+	if !p.Conn.IsAlive() {
+		return errors.New("player连接为不存活 IsAlive")
+	}
+	msgByte, err := proto.Marshal(data)
+	if err != nil {
+		return errors.New("结构体序列化错误" + err.Error())
+	}
+	err = p.Conn.SendMsg(msgId, msgByte)
+	if err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
+// SendMsg
+func (p *Player) SendMsg(msgId uint32, msgByte []byte) error {
+	if p.Conn == nil {
+		return errors.New("player连接为空")
+	}
+	if !p.Conn.IsAlive() {
+		return errors.New("player连接为不存活 IsAlive")
+	}
+	err := p.Conn.SendMsg(msgId, msgByte)
+	if err != nil {
+		return err
+	} else {
+		return nil
+	}
 }
 
 func (p *Player) OnExchangeAoiGrID(oldGID, newGID int) error {
@@ -213,58 +279,6 @@ func (p *Player) OnExchangeAoiGrID(oldGID, newGID int) error {
 	// }
 
 	return nil
-}
-
-// 获得当前玩家的可视周边玩家
-func (p *Player) GetNearPlayer() []*Player {
-	// 得到当前AOI区域的所有pID
-	pIDs := GetWM().GetRoom(p.RoomId).GetPIDsByPos(p.X, p.Z)
-	// 将所有pID对应的Player放到Player切片中
-	players := make([]*Player, 0, len(pIDs))
-	for _, pID := range pIDs {
-		players = append(players, WorldMgrObj.GetPlayerByPID(pID))
-	}
-	return players
-}
-
-// Player logs off
-// 玩家下线
-func (p *Player) LostConnection() {
-
-	// 获取周围AOI九宫格内的玩家
-	playerList := p.GetNearPlayer()
-
-	msg := &pb.LogoutResp{
-		UserId: p.Pid,
-	}
-
-	for _, player := range playerList {
-		player.SendMsg(201, msg)
-	}
-
-	//  当前玩家从AOI中摘除
-	GetWM().GetRoom(p.RoomId).RemoveFromGrIDByPos(p.Pid, p.X, p.Z)
-	GetWM().RemovePlayerByPID(p.Pid)
-}
-
-// SendMsg
-func (p *Player) SendMsg(msgId uint32, data proto.Message) error {
-	if p.Conn == nil {
-		return errors.New("player连接为空")
-	}
-	if !p.Conn.IsAlive() {
-		return errors.New("player连接为不存活 IsAlive")
-	}
-	msgByte, err := proto.Marshal(data)
-	if err != nil {
-		return errors.New("结构体序列化错误" + err.Error())
-	}
-	err = p.Conn.SendMsg(msgId, msgByte)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
 }
 
 // // SyncPID Inform the client about pID and synchronize the generated player ID to the client

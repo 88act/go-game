@@ -1,7 +1,9 @@
 package config
 
 import (
-	"github.com/zeromicro/go-zero/core/stores/cache"
+	"go-cms/common"
+
+	"github.com/zeromicro/go-zero/core/logc"
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
@@ -11,16 +13,14 @@ type Config struct {
 		AccessSecret string
 		AccessExpire int64
 	}
-	DB struct {
-		DataSource string
-	}
-	Cache cache.CacheConf
-
-	LocalRes struct {
+	DB common.DbConf
+	//	Redis      redis.RedisConf
+	WxMiniConf WxMiniConf
+	LocalRes   struct {
 		BaseUrl  string
 		BasePath string
 		Path     string
 		PathUser string
-		RtcModel int
 	}
+	LogConf logc.LogConf
 }

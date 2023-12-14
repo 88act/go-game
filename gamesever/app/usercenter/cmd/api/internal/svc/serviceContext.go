@@ -12,15 +12,14 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logc"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 type ServiceContext struct {
-	Config      config.Config
-	RedisClient *redis.Redis
+	Config config.Config
+	//RedisClient *redis.Redis
 	//UsercenterRpc         usercenter.Usercenter
 	//BasicRpc              basic.Basic
 	MemUserSev *model.MemUserSev

@@ -2,9 +2,9 @@
 
 ### 1.介绍
  
-go-game 是一款基于Go语言开发的支持分布式与微服务架构的游戏服务器。 支持单体、分布式等多种架构方案。
-本游戏框架居于go-zero微服务框架开发，可复用go-zero的grpc调用，服务治理，消息队列，日志，链路追踪等功能 
-通讯使用zinx框架支持 websocket ，http ，kcp ，tcp 多种通讯方式， 支持protobuf，json 协议。  
+go-game 是一款基于Go语言开发的支持分布式与微服务架构的游戏服务器。 支持单体、分布式等多种架构方案。 \
+本游戏框架居于go-zero微服务框架开发，可复用go-zero的grpc调用，服务治理，消息队列，日志，链路追踪等功能  \
+通讯使用zinx框架支持 websocket ，http ，kcp ，tcp 多种通讯方式， 支持protobuf，json 协议。   \
 消息队列支持kafka、redis、nats \
 日志支持文件模式，elasticsearch模式，支持prometheus性能监控等。 
 

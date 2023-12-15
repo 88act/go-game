@@ -10,7 +10,8 @@ go-game 是一款基于Go语言开发的支持分布式与微服务架构的游�
 
 client 提供一个居于  layabox typescript protobuf 的客户端 即时战斗 mmo rpg 游戏 demo。
  
-
+![架构图](gogame.jpg) 
+ 
 ### 2.背景现状
 
 老一代的游戏服务器框架中，游戏相关的逻辑都放在单一服务器，单一服务器有性能瓶颈，特别是复杂的战斗运算等，通常一个区只能达到数千人的规模。 单体服务的代码复杂，往往伴有不少bug，维护和测试都相当困难，服务器出bug宕机时将导致整区停服。 一些老游戏服务器也会把聊天服务器，拍卖行服务器，商城服务器，工会服务器等拆分成独立的进程或独立服务器。但还是基于各自独立编码的方式，没有统一的标准，导致项目变的更加庞杂难以维护。
@@ -44,6 +45,7 @@ client 提供一个居于  layabox typescript protobuf 的客户端 即时战斗
                api
                   internal
                      gameserver // 游戏服务器 wss/tcp /kcp
+                       pb/msg.proto // protobuf 定义文件
                rpc
 
     client      //客户端

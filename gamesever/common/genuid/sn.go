@@ -2,7 +2,7 @@ package genuid
 
 import (
 	"fmt"
-	"go-cms/common/tool"
+	"go-game/common/tool"
 	"time"
 )
 

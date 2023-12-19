@@ -3,10 +3,10 @@ package model
 import (
 	"context"
 	"errors"
-	"go-cms/common/mycache"
-	"go-cms/common/utils"
+	"go-game/common/mycache"
+	"go-game/common/utils"
 
-	. "go-cms/common/baseModel"
+	. "go-game/common/baseModel"
 
 	"gorm.io/gorm"
 )

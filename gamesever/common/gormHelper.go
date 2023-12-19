@@ -3,7 +3,7 @@ package common
 import (
 	"context"
 	"errors"
-	"go-cms/common/utils"
+	"go-game/common/utils"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logc"

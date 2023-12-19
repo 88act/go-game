@@ -1,8 +1,8 @@
 // 自动生成模板BasicSms
 package model
+
 import (
- 
-	. "go-cms/common/baseModel"
+	. "go-game/common/baseModel"
 )
 
 // BasicSms 结构体

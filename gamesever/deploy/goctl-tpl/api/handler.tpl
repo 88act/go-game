@@ -2,7 +2,7 @@ package {{.PkgName}}
  
 import (
 	"net/http"
-	"go-cms/common/result"
+	"go-game/common/result"
     "github.com/zeromicro/go-zero/rest/httpx"
 	{{.ImportPackages}}
 )

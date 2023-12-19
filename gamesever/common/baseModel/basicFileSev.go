@@ -2,9 +2,9 @@ package baseModel
 
 import (
 	"context"
-	"go-cms/common/mycache"
-	"go-cms/common/myconfig"
-	"go-cms/common/utils"
+	"go-game/common/mycache"
+	"go-game/common/myconfig"
+	"go-game/common/utils"
 	"strings"
 
 	"gorm.io/gorm"

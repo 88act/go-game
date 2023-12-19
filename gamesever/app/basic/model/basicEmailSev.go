@@ -2,9 +2,9 @@ package model
 
 import (
 	"context"
-	"go-cms/common/utils"
+	"go-game/common/utils"
 
-	. "go-cms/common/baseModel"
+	. "go-game/common/baseModel"
 
 	"github.com/zeromicro/go-zero/core/stores/cache"
 	"gorm.io/gorm"

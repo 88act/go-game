@@ -2,7 +2,7 @@
 package model
 
 import (
-	. "go-cms/common/baseModel"
+	. "go-game/common/baseModel"
 )
 
 // MemContactsGroup 结构体

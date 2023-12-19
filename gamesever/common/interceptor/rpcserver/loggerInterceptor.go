@@ -3,7 +3,7 @@ package rpcserver
 import (
 	"context"
 
-	"go-cms/common/xerr"
+	"go-game/common/xerr"
 
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"go-cms/common/ctxdata"
-	"go-cms/common/xerr"
+	"go-game/common/ctxdata"
+	"go-game/common/xerr"
 
 	"github.com/gogf/gf/util/gconv"
 	"github.com/pkg/errors"

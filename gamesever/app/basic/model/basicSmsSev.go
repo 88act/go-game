@@ -2,8 +2,8 @@ package model
 
 import (
 	"context"
-	. "go-cms/common/baseModel"
-	"go-cms/common/utils"
+	. "go-game/common/baseModel"
+	"go-game/common/utils"
 
 	"gorm.io/gorm"
 )

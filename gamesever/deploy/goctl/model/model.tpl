@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"go-cms/common/globalkey"
-	"go-cms/common/xerr"
+	"go-game/common/globalkey"
+	"go-game/common/xerr"
 
 	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"

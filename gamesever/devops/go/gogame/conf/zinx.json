@@ -1,0 +1,17 @@
+{
+  "Name":"gogame",
+  "Host":"0.0.0.0",
+  "TcpPort":8999,
+  "WsPort":8888,
+  "MaxConn":3000,
+  "WorkerPoolSize":10,
+  "LogDir": "./gogameLog",
+  "LogFile":"gogame.log",
+  "HeartbeatMax": 20,
+  "Mysql":"",
+  "Redis":"redis:6379",
+  "RedisPwd":"",
+  "RedisDB":1,
+  "Webrtc":"https://10.0.0.222/",
+  "ResUrl":"https://10.0.0.222/"  
+}

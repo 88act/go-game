@@ -1,0 +1,34 @@
+version: '3.5'
+services: 
+  gogame:
+    image: golang:1.21
+    container_name: gogame
+    environment:      
+      TZ: "$TZ"    
+    working_dir: /app
+    volumes:
+      - ./go:/app:rw
+    privileged: true
+    entrypoint: ["/bin/sh","/app/gogame/run.sh"]     
+    ports:
+      - 1001:1001
+      - 2001:2001
+      - 1002:1002
+      - 2002:2002
+      - 1003:1003
+      - 10019:10019
+      - 20019:20019
+      - 10029:10029
+      - 20029:20029
+      - 10039:10039   
+    restart: always
+    networks:
+      - goWorkNet
+
+networks:
+  goWorkNet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+

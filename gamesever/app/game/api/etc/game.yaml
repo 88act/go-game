@@ -1,0 +1,100 @@
+Name: game-api
+Host: 0.0.0.0
+Port: 1003 
+Mode: dev 
+
+DB:
+  DNS: gogame:mql2T3YtjeKswP9wV@tcp(mysql-gogame:53306)/go-game?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  #设置打开数据库连接的最大数量
+  MaxOpenConns: 100
+  #设置空闲连接池中连接的最大数量
+  MaxIdleConns: 20
+  #连接最大空闲时间 单位秒
+  ConnMaxIdleTime: 60
+  #设置连接可复用的最大时间 单位秒
+  ConnMaxLifetime: 180
+  #慢查询200毫秒
+  #SlowThresholdMillisecond: 200
+
+Redis:
+  Host: redis:6379
+  Type: node
+  Pass: rds9Psd7g89WfhRl4
+  key:
+
+LocalRes:
+  BaseUrl: https://10.0.0.81/
+  BasePath: /root/dnmp/www/localhost/
+  Path: res/sys
+  PathUser: res/user 
+  
+#jwtAuth
+JwtAuth:
+  AccessSecret: ae0536f9-1111-1111-1111-5a19ed505da0
+  AccessExpire: 31536000
+
+GameConf: 
+  Mode: websocket
+  Name: gameServer
+  Host: 0.0.0.0
+  TcpPort: 8999
+  WsPort: 8888
+  MaxConn: 3000
+  WorkerPoolSize: 10
+  LogDir: ./imserverLog
+  LogFile: imserver.log
+  HeartbeatMax: 20
+  LogIsolationLevel: 3  
+
+#rpc Usercenter
+UsercenterRpcConf:
+  Endpoints:
+    - gogame:2001
+  NonBlock: true
+
+#rpc Basic
+BasicRpcConf:
+  Endpoints:
+    - gogame:2002
+  NonBlock: true
+
+Prometheus:
+  Host: 0.0.0.0
+  Port: 10039
+  Path: /metrics
+ 
+Telemetry:
+ Name: game-api
+ Endpoint: http://jaeger:14268/api/traces
+ Sampler: 1.0
+ Batcher: jaeger
+
+
+#WxMiniConf
+WxMiniConf:
+  AppId: wx2111111119fadddddd
+  Secret: 20311111111111111ddddddd
+  
+#rpc
+# UsercenterRpcConf:
+#   Endpoints:
+#     - gogame:2001
+#   NonBlock: true
+
+# ImsRpcConf:
+#   Endpoints:
+#     - gogame:2003
+#   NonBlock: true
+
+ 
+# LogConf:
+#   ServiceName: game-api
+#   Level: debug
+#   KeepDays: 90
+#   # console file
+#   Mode: console 
+#   Path: logs/game-api
+#   Rotation: daily
+#   MaxSize: 5110
+#   MaxBackups: 20
+

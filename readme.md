@@ -33,47 +33,100 @@ client 提供一个居于  layabox typescript protobuf 的客户端 即时战斗
       doc
          game.sql // 数据库
       app
-         usercenter
-            cmd
-               api
-               rpc
-         basic 
-            cmd 
-               api 
-               rpc
-         game
-            cmd
-               api
-                  internal
-                     gameserver // 游戏服务器 wss/tcp /kcp
-                       pb/msg.proto // protobuf 定义文件
-               rpc
-
-    client      //客户端
+         usercenter            
+            api
+            rpc
+            model
+         basic             
+            api 
+            rpc
+            model
+         game            
+            api
+               internal
+                  gameserver   // 游戏服务器 wss/tcp /kcp
+                     pb/msg.proto // protobuf 定义文件
+            rpc
+            model
+      devops  // 本地部署docker文件  包含 prometheus jaeger  kafka 等
+         
+      client      //客户端
         layabox  // layabox 客户端demo  
         h5      //    vue/h5 客户端 demo          
      
 
 ```
-     
+ ###  4. 本地替换官方的 github.com/zeromicro/go-zero 库
+ 从官方克隆一份 github.com/zeromicro/go-zero 源码 ，放在本地目录go-zero 
+  在 go.mod 添加
+    replace github.com/zeromicro/go-zero v1.6.1 =>  ../go-zero 
+ 然后 下载  
+ https://github.com/88act/go-zero/blob/master/core/stores/redis/redis.go
+ 替换官方的 core/stores/redis/redis.go 文件
+
+ 修改后的 redis 
+   支持缓存 struct interface{}  []byte list 等复杂对象 
+  支持 设置过期时间
+  支持 批量删除等
+ 
   ### 5. 启动服务
 
-  ```language
+启动环境 
+cd  /devpos/
+docker-compose -f docker-compose.yaml  up -d
 
-usercenter
+进入容器
+docker exec -it kafka /bin/sh 
+cd /opt/kafka/bin/ 
+创建topic
+ ./kafka-topics.sh --create --zookeeper zookeeper:2181 --replication-factor 1 -partitions 1 --topic gogame-log
  
-  go run ./app/usercenter/cmd/rpc/usercenter.go  -f app/usercenter/cmd/rpc/etc/usercenter.yaml 
-  go run ./app/usercenter/cmd/api/usercenter.go  -f app/usercenter/cmd/api/etc/usercenter.yaml
- 
+修改权限sudo
+chmod 777 data/elasticsearch/data 
+chown root deploy/filebeat/conf/filebeat.yml
 
-  basic
-  go run ./app/basic/cmd/api/basic.go  -f app/basic/cmd/api/etc/basic.yaml
- 
-  game 
-  go run ./app/game/cmd/api/game.go  -f app/game/cmd/api/etc/game.yaml
- 
+重启一次 
+docker-compose restart go-stash
+docker-compose restart filebeat 
 
-```
+拷贝编译后的go二进制文件 到
+/devpos/go/gogame/目录
+
+启动 gogame 
+docker-compose -f docker-gogame.yaml  up -d
+
+
+
+
+测试：
+
+测试机添加host ，指向测试服务器
+10.0.0.100  goenv.local 
+
+
+访问接口测试 api接口 
+
+https://goenv.local/usercenter/v1/user/login
+https://goenv.local/usercenter/v1/user/register
+
+
+ELV日志查询
+http://goenv.local:8980/
+
+prometheus 监控 
+http://goenv.local:9090/
+
+
+链路追踪
+http://goenv.local:16686/search
+
+
+测试 websocket
+
+客户端连接 https://goenv.local/wss 
+
+
+
 
 
 

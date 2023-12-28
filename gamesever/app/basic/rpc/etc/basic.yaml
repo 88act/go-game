@@ -1,0 +1,79 @@
+Name: basic-rpc
+ListenOn: 0.0.0.0:2002
+Mode: dev
+
+DB:
+  DNS: gogame:mql2T3YtjeKswP9wV@tcp(mysql-gogame:53306)/go-game?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  #设置打开数据库连接的最大数量
+  MaxOpenConns: 100
+  #设置空闲连接池中连接的最大数量
+  MaxIdleConns: 20
+  #连接最大空闲时间 单位秒
+  ConnMaxIdleTime: 60
+  #设置连接可复用的最大时间 单位秒
+  ConnMaxLifetime: 180
+  #慢查询200毫秒
+  #SlowThresholdMillisecond: 200
+ 
+
+#jwtAuth 31536000 秒 365天 
+JwtAuth:
+  AccessSecret: ae0536f9-1111-1111-1111-5a19ed505da0
+  AccessExpire: 31536000
+
+Redis:
+  Host: redis:6379
+  Type: node
+  Pass: rds9Psd7g89WfhRl4
+  Key: 
+
+LocalRes:
+  BaseUrl: https://10.0.0.81/
+  BasePath: /mydata/dnmp/www/gocms/
+  Path: res/sys
+  PathUser: res/user  
+
+Prometheus:
+ Host: 0.0.0.0
+ Port: 20029
+ Path: /metrics
+
+Telemetry:
+ Name: basic-rpc
+ Endpoint: http://jaeger:14268/api/traces
+ Sampler: 1.0
+ Batcher: jaeger
+
+
+ 
+SendEmailConf:
+  Name: SendEmail
+  Brokers:
+    - kafka:9092
+  Group: send-email-group
+  Topic: send-email-topic
+  Offset: first
+  Consumers: 1
+  Processors: 1
+
+SendSmsConf:
+  Name: SendSms
+  Brokers:
+    - kafka:9092
+  Group: send-sms-group
+  Topic: send-sms-topic
+  Offset: first
+  Consumers: 1
+  Processors: 1  
+
+  
+ImageZipConf:
+  Name: ImageZip
+  Brokers:
+    - kafka:9092
+  Group: image-zip-group
+  Topic: image-zip-topic
+  Offset: first
+  Consumers: 1
+  Processors: 1 
+ 

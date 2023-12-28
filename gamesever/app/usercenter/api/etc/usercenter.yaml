@@ -1,0 +1,90 @@
+Name: usercenter-api
+Host: 0.0.0.0
+Port: 1001
+Mode: dev 
+
+DB:
+  DNS: gogame:mql2T3YtjeKswP9wV@tcp(mysql-gogame:53306)/go-game?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  #设置打开数据库连接的最大数量
+  MaxOpenConns: 100
+  #设置空闲连接池中连接的最大数量
+  MaxIdleConns: 20
+  #连接最大空闲时间 单位秒
+  ConnMaxIdleTime: 60
+  #设置连接可复用的最大时间 单位秒
+  ConnMaxLifetime: 180
+  #慢查询200毫秒
+  #SlowThresholdMillisecond: 200
+ 
+Redis:
+  Host: redis:6379
+  Type: node
+  Pass: rds9Psd7g89WfhRl4
+  Key: 
+
+LocalRes:
+  BaseUrl: https://10.0.0.81/
+  BasePath: /mydata/dnmp/www/gocms/
+  Path: res/sys
+  PathUser: res/user  
+ 
+   
+#jwtAuth
+JwtAuth:
+  AccessSecret: ae0536f9-1111-1111-1111-5a19ed505da0
+  AccessExpire: 31536000
+
+
+#WxMiniConf
+WxMiniConf:
+  AppId: wx2111111119fadddddd
+  Secret: 20311111111111111ddddddd
+
+
+#监控
+Prometheus:
+  Host: 0.0.0.0
+  Port: 10019
+  Path: /metrics
+
+#链路追踪
+Telemetry:
+ Name: usercenter-api
+ Endpoint: http://jaeger:14268/api/traces
+ Sampler: 1.0
+ Batcher: jaeger
+  
+ 
+UsercenterRpcConf:
+  Endpoints:
+    - gogame:2001
+  NonBlock: true
+
+#rpc调用配置Basic
+# BasicRpcConf:
+#   Endpoints:
+#     - gogame:2002
+#   NonBlock: true
+   
+# BasicRpc:
+#   Etcd:
+#     Hosts:
+#     - etcd:2379
+#     Key: basic.rpc
+
+# UsercenterRpcConf:
+#   Etcd:
+#     Hosts:
+#     - etcd:2379
+#     Key: usercenter-rpc 
+# LogConf:
+#   ServiceName: usercenter-api
+#   Level: debug
+#   KeepDays: 90
+#   # console file
+#   Mode: console  
+#   Path: logs/usercenter-api
+#   Rotation: daily
+#   MaxSize: 5110
+#   MaxBackups: 20
+ 

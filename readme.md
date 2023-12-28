@@ -1,4 +1,4 @@
- 
+  
 
 ### 1.介绍
  
@@ -57,23 +57,22 @@ client 提供一个居于  layabox typescript protobuf 的客户端 即时战斗
 
 ```
  ###  4. 本地替换官方的 github.com/zeromicro/go-zero 库
- 从官方克隆一份 github.com/zeromicro/go-zero 源码 ，放在本地目录go-zero 
-  在 go.mod 添加
-    replace github.com/zeromicro/go-zero v1.6.1 =>  ../go-zero 
- 然后 下载  
- https://github.com/88act/go-zero/blob/master/core/stores/redis/redis.go
- 替换官方的 core/stores/redis/redis.go 文件
+ 从官方克隆一份 github.com/zeromicro/go-zero 源码 ，放在本地目录go-zero   \
+  在 go.mod 添加  \
+    replace github.com/zeromicro/go-zero v1.6.1 =>  ../go-zero   \
+ 然后 下载   https://github.com/88act/go-zero/blob/master/core/stores/redis/redis.go   \
+ 替换官方的 core/stores/redis/redis.go 文件  
 
- 修改后的 redis 
-   支持缓存 struct interface{}  []byte list 等复杂对象 
-  支持 设置过期时间
-  支持 批量删除等
+ 修改后的 redis  \
+   支持缓存 struct interface{}  []byte list 等复杂对象  \
+  支持 设置过期时间 \
+  支持 批量删除等  
  
   ### 5. 启动服务
 
 启动环境 
-cd  /devpos/
-docker-compose -f docker-compose.yaml  up -d
+cd  /devpos/   
+docker-compose -f docker-compose.yaml  up -d  
 
 进入容器
 docker exec -it kafka /bin/sh 
@@ -94,7 +93,6 @@ docker-compose restart filebeat
 
 启动 gogame 
 docker-compose -f docker-gogame.yaml  up -d
-
 
 
 
